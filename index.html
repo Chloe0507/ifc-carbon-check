@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IFC Carbon Check</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">IFC Carbon Check</span>
+      </div>
+      <div class="topbar-meta">
+        <div class="meta-item">
+          <span class="meta-label">Model</span>
+          <span class="meta-value" id="meta-model">–</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Schema</span>
+          <span class="meta-value" id="meta-schema">–</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Assessed against</span>
+          <span class="meta-value">EN 15978 · Ökobaudat</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="rail">
+        <a class="rail-item active" data-view="overview"><span class="ico">▦</span>Overview</a>
+        <a class="rail-item" data-view="readiness"><span class="ico">✓</span>Readiness check<span class="soon">day 2</span></a>
+        <a class="rail-item" data-view="carbon"><span class="ico">◐</span>Carbon<span class="soon">day 5</span></a>
+        <a class="rail-item" data-view="library"><span class="ico">≡</span>Material library<span class="soon">day 4</span></a>
+        <div class="rail-sep"></div>
+        <a class="rail-item" data-view="settings"><span class="ico">⚙</span>Project settings<span class="soon">day 6</span></a>
+        <label class="rail-upload">
+          <input type="file" id="file-input" accept=".ifc" hidden />
+          Load your own IFC
+        </label>
+      </nav>
+
+      <section class="cards cards-left">
+        <article class="card">
+          <h3>Building elements</h3>
+          <div class="kpi"><span id="kpi-elements">–</span></div>
+          <p class="hint" id="kpi-elements-note"></p>
+          <ul class="cat-list" id="cat-list"></ul>
+        </article>
+        <article class="card">
+          <h3>LCA readiness</h3>
+          <div class="kpi muted"><span>–</span><small>% fully specified</small></div>
+          <p class="hint">The IDS check arrives on day 2.</p>
+        </article>
+      </section>
+
+      <main class="viewport-wrap">
+        <div id="viewport"></div>
+        <div class="loading" id="loading">Loading model…</div>
+        <div class="modebar">
+          <button class="mode active" data-mode="normal">Model</button>
+          <button class="mode" data-mode="readiness" disabled>Readiness</button>
+          <button class="mode" data-mode="carbon" disabled>Carbon heatmap</button>
+          <span class="modebar-sep"></span>
+          <button class="mode" id="btn-fit">Fit view</button>
+        </div>
+      </main>
+
+      <section class="cards cards-right">
+        <article class="card">
+          <h3>Embodied carbon</h3>
+          <div class="kpi muted"><span>–</span><small>kg CO₂e · A1–A3</small></div>
+          <p class="hint">The carbon calculation arrives on day 5.</p>
+        </article>
+        <article class="card card-grow">
+          <h3>Selected element</h3>
+          <div id="props" class="props">
+            <p class="hint">Click an element in the model to see its IFC data.</p>
+          </div>
+        </article>
+      </section>
+
+      <footer class="ticker">
+        <span class="ticker-title">Readiness issues</span>
+        <span class="ticker-body" id="ticker">No checks run yet. They'll appear here as a running list.</span>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

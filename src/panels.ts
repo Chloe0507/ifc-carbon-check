@@ -1,6 +1,7 @@
 // Small render functions for the dashboard cards. Plain DOM, no framework.
 import type { ElementInfo, ModelSummary } from "./model-data";
 import type { CheckReport, Rule } from "./checks";
+import type { Coverage } from "./coverage";
 
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -92,4 +93,36 @@ export function renderProperties(
           .join("")}</dl>`,
       )
       .join("")}`;
+}
+
+/** Stacked bars showing where material and quantity data come from. */
+export function renderCoverage(el: HTMLElement, c: Coverage) {
+  const bar = (title: string, total: number, ok: number, parts: [string, number, string][]) => `
+    <div class="cov">
+      <div class="cov-title"><span>${title}</span><span>${ok} of ${total}</span></div>
+      <div class="cov-bar">${parts.map(([, n, color]) => `<i style="width:${(n / total) * 100}%;background:${color}"></i>`).join("")}</div>
+      <div class="cov-legend">${parts
+        .filter(([, n]) => n > 0)
+        .map(([label, n, color]) => `<span><b style="background:${color}"></b>${label} ${n}</span>`)
+        .join("")}</div>
+    </div>`;
+
+  el.innerHTML =
+    bar("Material", c.total, c.total - c.material.missing, [
+      ["on element", c.material.element, "#0f9d7a"],
+      ["from type", c.material.type, "#56b89a"],
+      ["from parent", c.material.parent, "#9fd8c5"],
+      ["missing", c.material.missing, "#d64545"],
+    ]) +
+    bar("Quantity", c.total, c.total - c.quantity.none, [
+      ["from IFC", c.quantity.ifc, "#0f9d7a"],
+      ["from 3D geometry", c.quantity.geometry, "#f0b429"],
+      ["none", c.quantity.none, "#d64545"],
+    ]) +
+    (c.layers.of
+      ? bar("Layer thicknesses", c.layers.of, c.layers.complete, [
+          ["complete", c.layers.complete, "#0f9d7a"],
+          ["missing", c.layers.of - c.layers.complete, "#d64545"],
+        ])
+      : "");
 }

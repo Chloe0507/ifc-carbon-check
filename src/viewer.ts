@@ -128,6 +128,77 @@ export class Viewer {
     await this.fragments.core.update(true);
   }
 
+  /** Remembers where the camera is, so it can be put back after snapshots. */
+  saveView() {
+    const c = this.world.camera.controls;
+    const position = c.getPosition(new THREE.Vector3());
+    const target = c.getTarget(new THREE.Vector3());
+    return () => c.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
+  }
+
+  /**
+   * Points the camera at the given elements (or the whole model), then returns
+   * the camera in IFC coordinates and a PNG snapshot, as BCF viewpoints need.
+   */
+  async viewpoint(ids: number[], isolate = false) {
+    if (!this.model) throw new Error("No model loaded");
+    // A few elements inside the building would be hidden by walls: show only them.
+    const hidden = isolate ? (await this.model.getItemsByVisibility(true)).filter((id) => !ids.includes(id)) : [];
+    if (hidden.length) await this.model.setVisible(hidden, false);
+    const box = ids.length ? await this.model.getMergedBox(ids) : this.model.box;
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    // Look from the front-right, a bit from above, far enough to see everything.
+    const offset = new THREE.Vector3(1, 0.8, 1).normalize().multiplyScalar(Math.max(sphere.radius, 2) * 2.4);
+    const eye = sphere.center.clone().add(offset);
+    const c = this.world.camera.controls;
+    await c.setLookAt(eye.x, eye.y, eye.z, sphere.center.x, sphere.center.y, sphere.center.z, false);
+
+    await this.fragments.core.update(true);
+    await new Promise((r) => setTimeout(r, 400));
+    await this.fragments.core.update(true);
+
+    const camera = this.world.camera.three as THREE.PerspectiveCamera;
+    c.update(0); // apply the new look-at to the camera now, not on the next frame
+    camera.updateMatrixWorld();
+    const direction = camera.getWorldDirection(new THREE.Vector3());
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+    // The model was moved near the origin when loaded (its coordination offset);
+    // undo that, then swap axes: three.js is Y-up, IFC and BCF are Z-up.
+    const toModel = (await this.model.getCoordinationMatrix()).clone().invert(); // clone: the model keeps a reference
+    const toIfc = (v: THREE.Vector3): [number, number, number] => [v.x, -v.z, v.y];
+    const position = camera.position.clone().applyMatrix4(toModel);
+
+    const snapshot = await this.snapshot();
+    if (hidden.length) await this.model.setVisible(hidden, true);
+    return {
+      camera: { position: toIfc(position), direction: toIfc(direction), up: toIfc(up), fieldOfView: camera.fov },
+      snapshot,
+    };
+  }
+
+  /** The current view as a PNG on a white background. */
+  private async snapshot(): Promise<Blob> {
+    const renderer = this.world.renderer!.three;
+    renderer.render(this.world.scene.three, this.world.camera.three);
+    const src = renderer.domElement;
+    const out = document.createElement("canvas");
+    out.width = src.width;
+    out.height = src.height;
+    const ctx = out.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(src, 0, 0); // must run right after render(), before the buffer clears
+    return new Promise((resolve) => out.toBlob((b) => resolve(b!), "image/png"));
+  }
+
+  /** Volume of each element worked out from its 3D geometry, in m³. */
+  async volumes(ids: number[]) {
+    const out = new Map<number, number>();
+    if (!this.model) return out;
+    for (const id of ids) out.set(id, await this.model.getItemsVolume([id]));
+    return out;
+  }
+
   /** A key per element from its bounding box (rounded to 1 cm), to spot duplicates. */
   async boxKeys(ids: number[]) {
     const keys = new Map<number, string>();

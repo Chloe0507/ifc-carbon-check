@@ -36,6 +36,12 @@ The rules that IDS 1.0 can express are published as [`public/requirements/lca-re
 
 What the Duplex shows: it's 99% BIM-ready (two ceilings sit exactly on top of each other) and 0% LCA-ready. There are no quantity sets or classifications at all, and doors, windows, footings, stairs, railings and members have no material.
 
+## Data coverage and BCF issues
+
+**Coverage.** Before any carbon number, the app shows how much of the model it can actually calculate, and where each input comes from. Material can be assigned on the element, on its type or on its parent element (a roof slab takes the roof's material), or be missing. Quantity comes from the IFC's quantity sets or, when those are absent, from the 3D geometry. On the Duplex, 62% of building elements are calculable: 55 have no material, and every volume comes from geometry because the file has no quantity sets.
+
+**BCF export.** "Export issues as BCF" writes a [BCF 2.1](https://github.com/buildingSMART/BCF-XML/tree/release_2_1) file with one issue per failing rule, the way a coordinator would send it, not one ticket per element. Each issue lists the failing elements by GlobalId, colours them red, and carries a camera view and snapshot. Issues with 20 elements or fewer open with only those elements visible, so interior ones aren't hidden behind walls. Open it in BIMcollab Zoom, Solibri, or Revit/Archicad with a BCF plugin, next to the IFC. The files validate against buildingSMART's official BCF 2.1 schemas, and each camera points at its elements to within 5 mm (checked against IfcOpenShell geometry).
+
 ## Run it locally
 
 ```bash
@@ -51,6 +57,8 @@ npm run dev     # opens on http://localhost:5173
 | `src/viewer.ts` | The 3D view (That Open Engine): loading IFC, camera, clicking elements |
 | `src/ifc-data.ts` | Reads what the checks and the LCA need straight from the IFC with web-ifc: materials and layer thicknesses, property and quantity sets, classifications, storeys |
 | `src/checks.ts` | The readiness rules (B1–B5, R1–R7) and the engine that runs them |
+| `src/coverage.ts` | Measures where each element's material and quantity come from, and how many elements can be calculated |
+| `src/bcf.ts` | Writes readiness issues as a BCF 2.1 zip (markup, viewpoint, snapshot per issue) |
 | `public/requirements/lca-ready.ids` | The same requirements as an IDS file |
 | `src/model-data.ts` | Summarises a model (element counts) and describes one element (attributes, property sets) |
 | `src/panels.ts` | Renders the cards in the side panels |

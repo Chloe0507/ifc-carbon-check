@@ -61,7 +61,10 @@
           </div>
           <p class="hint" id="kpi-ready-note"></p>
           <ul class="rule-list" id="rule-list"></ul>
-          <a class="ids-link" href="requirements/lca-ready.ids" download>Download the requirements (IDS)</a>
+          <div class="card-actions">
+            <button class="btn" id="btn-bcf">Export issues as BCF</button>
+            <a class="ids-link" href="requirements/lca-ready.ids" download>Requirements (IDS)</a>
+          </div>
         </article>
       </section>
 
@@ -80,9 +83,10 @@
 
       <section class="cards cards-right">
         <article class="card">
-          <h3>Embodied carbon</h3>
-          <div class="kpi muted"><span>–</span><small>kg CO₂e · A1–A3</small></div>
-          <p class="hint">The carbon calculation arrives on day 5.</p>
+          <h3>LCA data coverage</h3>
+          <div class="kpi"><span id="kpi-calc">–</span><small>%</small></div>
+          <p class="hint" id="kpi-calc-note">Carbon can be calculated for this share of elements.</p>
+          <div id="coverage"></div>
         </article>
         <article class="card card-grow">
           <h3>Selected element</h3>

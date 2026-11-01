@@ -18,6 +18,8 @@ export interface ElementRecord {
   materials: MaterialLayer[];
   /** True when the materials come from a layer set (walls, slabs, roofs). */
   layered: boolean;
+  /** Where the material assignment was found. */
+  materialSource: "element" | "type" | "parent" | null;
   /** Property sets: set name -> property name -> value. */
   psets: Record<string, Record<string, unknown>>;
   /** Quantity sets: set name -> quantity name -> value (SI units). */
@@ -37,6 +39,8 @@ export interface Storey {
 
 export interface ModelData {
   schema: string;
+  /** GlobalId of the IfcProject, which BCF files point back to. */
+  projectGuid: string;
   /** Metres per model length unit, or null when the length unit isn't SI. */
   lengthScale: number | null;
   elements: Map<number, ElementRecord>;
@@ -94,6 +98,7 @@ export async function readModel(bytes: Uint8Array): Promise<ModelData> {
           name: e.Name?.value ?? "Unnamed",
           materials: [],
           layered: false,
+          materialSource: null,
           psets: {},
           qsets: {},
           classifications: [],
@@ -124,7 +129,7 @@ export async function readModel(bytes: Uint8Array): Promise<ModelData> {
       if (!layers.length) continue;
       for (const o of rel.RelatedObjects ?? []) {
         const el = elements.get(o.expressID);
-        if (el) Object.assign(el, { materials: layers, layered });
+        if (el) Object.assign(el, { materials: layers, layered, materialSource: "element" });
         else typeMaterials.set(o.expressID, { layers, layered });
       }
     }
@@ -193,7 +198,8 @@ export async function readModel(bytes: Uint8Array): Promise<ModelData> {
     // 7. Fill gaps from the type, then from the parent (a roof slab inherits the roof's material).
     for (const el of elements.values()) {
       if (!el.materials.length && el.typeId !== null && typeMaterials.has(el.typeId)) {
-        Object.assign(el, { materials: typeMaterials.get(el.typeId)!.layers, layered: typeMaterials.get(el.typeId)!.layered });
+        const t = typeMaterials.get(el.typeId)!;
+        Object.assign(el, { materials: t.layers, layered: t.layered, materialSource: "type" });
       }
       if (!el.classifications.length && el.typeId !== null) {
         el.classifications = typeClassifications.get(el.typeId) ?? [];
@@ -202,11 +208,13 @@ export async function readModel(bytes: Uint8Array): Promise<ModelData> {
     for (const el of elements.values()) {
       const parent = el.parentId !== null ? elements.get(el.parentId) : undefined;
       if (!el.materials.length && parent?.materials.length) {
-        Object.assign(el, { materials: parent.materials, layered: parent.layered });
+        Object.assign(el, { materials: parent.materials, layered: parent.layered, materialSource: "parent" });
       }
     }
 
-    return { schema: ifc.GetModelSchema(modelId), lengthScale, elements, storeys };
+    const project = ids("IFCPROJECT")[0];
+    const projectGuid = project !== undefined ? (line(project).GlobalId?.value ?? "") : "";
+    return { schema: ifc.GetModelSchema(modelId), projectGuid, lengthScale, elements, storeys };
   } finally {
     ifc.CloseModel(modelId);
   }

@@ -167,7 +167,14 @@ export function carbonLegend(breaks: number[], provisional: boolean) {
 export function renderCarbon(
   el: HTMLElement,
   r: CarbonReport,
-  opts: { floorArea: { value: number; rooms: number } | null; includeProvisional: boolean; unreviewed: number; assessed: number },
+  opts: {
+    floorArea: { value: number; rooms: number } | null;
+    includeProvisional: boolean;
+    unreviewed: number;
+    assessed: number;
+    /** The result without swaps, when a what-if scenario is active. */
+    baseline?: CarbonReport;
+  },
 ) {
   const max = Math.max(...Object.values(r.byModule).map(Math.abs), 1);
   const order = ["A1-A3", "C3", "C4", "D"];
@@ -190,10 +197,12 @@ export function renderCarbon(
       <div><div class="kpi"><span>${(r.total / 1000).toLocaleString("en", { maximumFractionDigits: 1 })}</span><small>t CO₂e</small></div><p class="hint">Total, ${byModule.filter(([m]) => m !== "D").map(([m]) => m).join(" + ")}</p></div>
       <div><div class="kpi"><span>${perM2 === null ? "–" : Math.round(perM2)}</span><small>kg/m²</small></div><p class="hint">${opts.floorArea ? (opts.floorArea.rooms ? `per m² of room area (${Math.round(opts.floorArea.value)} m², ${opts.floorArea.rooms} rooms)` : `per m² of the area set in project settings (${Math.round(opts.floorArea.value)} m²)`) : "no rooms in the model; set an area in project settings"}</p></div>
     </div>
+    ${opts.baseline ? scenarioBanner(r, opts.baseline) : ""}
     <p class="hint">${r.elements.size} of ${opts.assessed} elements calculated${missing ? `; not calculated: ${missing}` : ""}.</p>
     ${opts.unreviewed === 0 ? "" : `<label class="toggle"><input type="checkbox" id="carbon-provisional" ${opts.includeProvisional ? "checked" : ""}/>
       Count unreviewed AI matches (${opts.unreviewed} of the materials)</label>`}
     ${opts.includeProvisional && r.provisionalTotal ? `<p class="hint prov-note">${kg(r.provisionalTotal)} of the total comes from matches nobody has approved yet.</p>` : ""}
+    <div class="whatif" id="whatif"></div>
     <h4 class="sub-h">By life-cycle module</h4>
     <ul class="bars">${modules}</ul>
     <h4 class="sub-h">Largest materials</h4>
@@ -214,4 +223,33 @@ export function carbonDetail(c: ElementCarbon | undefined, why: string | undefin
   return `<h4>Embodied carbon · ${kg(c.total)} CO₂e</h4>
     <p class="hint">Volume ${c.volume.toFixed(2)} m³ from ${c.volumeSource === "ifc" ? "IFC quantities" : "3D geometry"}, split over the layers by thickness.</p>
     <dl class="carbon-dl">${rows}</dl>`;
+}
+
+function scenarioBanner(r: CarbonReport, base: CarbonReport) {
+  const d = r.total - base.total;
+  const pctv = base.total ? (d / base.total) * 100 : 0;
+  return `<p class="scenario-banner"><b>What-if scenario.</b> ${kg(r.total)} vs ${kg(base.total)} as modelled: ${d <= 0 ? "−" : "+"}${kg(Math.abs(d))} (${d <= 0 ? "−" : "+"}${Math.abs(pctv).toFixed(1)}%).</p>`;
+}
+
+/** The what-if section of the carbon card: pick a material to swap, and the list of active swaps with their effect. */
+export function renderWhatIf(
+  el: HTMLElement,
+  materials: { material: string; total: number }[],
+  swaps: { material: string; to: string; delta: number }[],
+  handlers: { onChoose: (material: string) => void; onRemove: (material: string) => void; onReset: () => void },
+) {
+  const options = materials.map((m) => `<option value="${esc(m.material)}">${esc(m.material)} · ${kg(m.total)}</option>`).join("");
+  el.innerHTML = `
+    <h4 class="sub-h">What if… swap a material</h4>
+    <p class="hint">Try a lower-carbon alternative. The reviewed mapping stays as it is; the swap only changes this scenario.</p>
+    <div class="whatif-row"><select id="wi-mat">${options}</select><button class="btn btn-sm" id="wi-go">Choose…</button></div>
+    ${swaps.length ? `<ul class="swap-list">${swaps
+      .map((s) => `<li><span>${esc(s.material)}<br><span class="to">→ ${esc(s.to)}</span></span>
+        <span class="delta ${s.delta <= 0 ? "down" : "up"}">${s.delta <= 0 ? "−" : "+"}${kg(Math.abs(s.delta))}</span>
+        <button data-rm="${esc(s.material)}" title="Remove this swap">×</button></li>`)
+      .join("")}</ul>
+      <div class="card-actions"><button class="btn btn-sm btn-ghost" id="wi-reset">Back to the model as designed</button></div>` : ""}`;
+  el.querySelector("#wi-go")!.addEventListener("click", () => handlers.onChoose(el.querySelector<HTMLSelectElement>("#wi-mat")!.value));
+  el.querySelectorAll<HTMLButtonElement>("button[data-rm]").forEach((b) => b.addEventListener("click", () => handlers.onRemove(b.dataset.rm!)));
+  el.querySelector("#wi-reset")?.addEventListener("click", handlers.onReset);
 }

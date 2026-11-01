@@ -5,11 +5,12 @@ import { Viewer } from "./viewer";
 import { summarise, describeElement } from "./model-data";
 import {
   binOf, carbonBins, carbonDetail, carbonLegend, CARBON_RAMP,
-  renderCarbon, renderCategories, renderCoverage, renderProperties, renderRules, renderTicker,
+  renderCarbon, renderCategories, renderWhatIf, renderCoverage, renderProperties, renderRules, renderTicker,
 } from "./panels";
 import { calculate, type CarbonReport } from "./carbon";
 import { renderLifecycleChart } from "./charts";
 import { loadSettings, renderSettings } from "./settings";
+import { loadSwaps, openSwapPicker, scenarioMappings, type Swap, type SwapFile } from "./swap";
 import { mappingState } from "./lca-data";
 import { readModel, type ModelData } from "./ifc-data";
 import { runChecks, type CheckReport } from "./checks";
@@ -21,6 +22,8 @@ import { materialUses, renderLibrary } from "./library";
 const DEFAULT_MODEL = { url: "models/duplex.ifc", name: "Duplex Apartment" };
 // Material mappings reviewed for the bundled models, by IFC file name.
 const MAPPINGS: Record<string, string> = { "duplex.ifc": "data/mappings/duplex.json" };
+// AI-suggested lower-carbon alternatives for the bundled models.
+const SWAPS: Record<string, string> = { "duplex.ifc": "data/swaps/duplex.json" };
 // Issues about this many elements or fewer open with only those elements shown.
 const ISOLATE_BELOW = 20;
 const COLORS = { fail: "#d64545", some: "#f0b429", pass: "#7ccfb5" };
@@ -37,6 +40,9 @@ const state = {
   mode: "normal" as "normal" | "readiness" | "carbon",
   volumes: new Map<number, number>(),
   carbon: null as CarbonReport | null,
+  baseline: null as CarbonReport | null,
+  swaps: [] as Swap[],
+  swapFile: null as SwapFile | null,
   includeProvisional: true,
   rule: null as string | null, // the rule picked in the readiness card, if any
   view: "overview" as "overview" | "readiness" | "carbon" | "library" | "settings",
@@ -105,6 +111,46 @@ function renderReadiness() {
   renderTicker($("ticker"), report);
 }
 
+function renderWhatIfView() {
+  const base = state.baseline!;
+  const now = state.carbon!;
+  const total = (r: CarbonReport, m: string) => r.byMaterial.find((x) => x.material === m)?.total ?? 0;
+  renderWhatIf(
+    $("whatif"),
+    base.byMaterial,
+    state.swaps.map((s) => ({ material: s.material, to: state.byUuid.get(s.uuid)?.name ?? s.uuid, delta: total(now, s.material) - total(base, s.material) })),
+    {
+      onChoose: (material) => {
+        const m = state.mappings.get(material);
+        openSwapPicker({
+          host: $("swap-picker"),
+          material,
+          current: m?.uuid ? state.byUuid.get(m.uuid) : undefined,
+          shortlist: state.swapFile?.swaps[material] ?? [],
+          all: state.datasets,
+          byUuid: state.byUuid,
+          boundary: state.boundary,
+          onPick: async (swap) => {
+            state.swaps = [...state.swaps.filter((x) => x.material !== swap.material), swap];
+            recalculate();
+            if (state.mode === "carbon") await applyMode();
+          },
+        });
+      },
+      onRemove: async (material) => {
+        state.swaps = state.swaps.filter((x) => x.material !== material);
+        recalculate();
+        if (state.mode === "carbon") await applyMode();
+      },
+      onReset: async () => {
+        state.swaps = [];
+        recalculate();
+        if (state.mode === "carbon") await applyMode();
+      },
+    },
+  );
+}
+
 function applySettings() {
   const settings = loadSettings();
   state.boundary = settings.boundary;
@@ -130,6 +176,8 @@ async function loadMappings(fileName: string) {
   state.mappings = new Map((lca.mapping?.mappings ?? []).map((m) => [m.material, m]));
   state.reviewNote = lca.mapping?.reviewedBy ? `Published mapping reviewed by ${lca.mapping.reviewedBy} on ${lca.mapping.reviewed}.` : "";
   for (const [name, m] of Object.entries(loadEdits(fileName))) state.mappings.set(name, m);
+  state.swapFile = await loadSwaps(SWAPS[fileName]);
+  state.swaps = [];
   renderLibraryView();
   renderSettingsView();
   recalculate();
@@ -138,9 +186,10 @@ async function loadMappings(fileName: string) {
 /** Runs the carbon calculation with the current mappings and refreshes the carbon card. */
 function recalculate() {
   if (!state.report || !state.data) return;
-  state.carbon = calculate(
-    state.report.assessed, state.volumes, state.mappings, state.byUuid, state.boundary, state.includeProvisional, state.data.elements,
-  );
+  const run = (mappings: typeof state.mappings) =>
+    calculate(state.report!.assessed, state.volumes, mappings, state.byUuid, state.boundary, state.includeProvisional, state.data!.elements);
+  state.baseline = run(state.mappings);
+  state.carbon = state.swaps.length ? run(scenarioMappings(state.mappings, state.swaps)) : state.baseline;
   renderLifecycleChart($("lifecycle"), state.carbon, state.boundary.modules);
   const unreviewed = [...state.mappings.values()].filter((m) => {
     const ds = m.uuid ? state.byUuid.get(m.uuid) : undefined;
@@ -151,7 +200,9 @@ function recalculate() {
     includeProvisional: state.includeProvisional,
     unreviewed,
     assessed: state.report.assessed.length,
+    baseline: state.swaps.length ? state.baseline : undefined,
   });
+  renderWhatIfView();
   document.getElementById("carbon-provisional")?.addEventListener("change", async (e) => {
     state.includeProvisional = (e.target as HTMLInputElement).checked;
     recalculate();
@@ -231,11 +282,14 @@ async function applyMode() {
       $("legend").innerHTML = `<span>Nothing calculated: check the material library and project settings.</span>`;
       return viewer.paint([]);
     }
-    const values = [...c.elements.values()].map((e) => e.total);
+    // Bins come from the model as designed, so a what-if swap visibly lightens (or darkens) elements.
+    const values = [...(state.baseline ?? c).elements.values()].map((e) => e.total);
     const breaks = carbonBins(values);
     const groups = CARBON_RAMP.map((color) => ({ color, ids: [] as number[] }));
     for (const e of c.elements.values()) groups[binOf(e.total, breaks)].ids.push(e.id);
-    $("legend").innerHTML = carbonLegend(breaks, state.includeProvisional && c.provisionalTotal !== 0);
+    $("legend").innerHTML =
+      carbonLegend(breaks, state.includeProvisional && c.provisionalTotal !== 0) +
+      (state.swaps.length ? `<span class="legend-note">What-if scenario: ${state.swaps.length} swap${state.swaps.length > 1 ? "s" : ""}</span>` : "");
     return viewer.paint(groups);
   }
   if (state.rule) {

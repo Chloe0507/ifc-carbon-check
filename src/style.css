@@ -337,3 +337,17 @@ html, body {
 .set-row span { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .set-row small { color: var(--text-3); font-size: 12px; }
 .set-row input[type="number"] { width: 90px; font: inherit; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; }
+.picker-list li.disabled { padding: 8px 10px; opacity: 0.55; cursor: not-allowed; }
+
+/* What-if */
+.whatif { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.whatif-row { display: flex; gap: 8px; align-items: center; }
+.whatif select { flex: 1; min-width: 0; font: inherit; font-size: 12px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.swap-list { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; }
+.swap-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.swap-list .to { color: var(--text-3); font-size: 11.5px; }
+.swap-list .delta { font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+.swap-list button { border: 0; background: none; color: var(--text-3); cursor: pointer; font-size: 14px; }
+.delta.down { color: var(--accent); }
+.delta.up { color: var(--bad); }
+.scenario-banner { background: #eef4ff; color: #1f5fcc; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 8px 0 0; }

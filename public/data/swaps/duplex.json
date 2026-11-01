@@ -1,0 +1,61 @@
+{
+  "model": "duplex.ifc",
+  "suggestedBy": "Claude (AI). Alternatives with the same function, chosen from generic Ökobaudat data.",
+  "note": "A swap keeps the layer thickness and volume share. Structural and thermal equivalence must be checked separately.",
+  "swaps": {
+    "Masonry - Concrete Block": [
+      {
+        "uuid": "a1deced7-6fa9-4266-bc86-da75b3653b06",
+        "reason": "Lightweight block from natural pumice. Far less cement per m³ (500 kg/m³). Check the load-bearing capacity: the blocks are lighter and weaker."
+      },
+      {
+        "uuid": "23fc083c-960d-4d31-a509-f383e01c3179",
+        "reason": "Expanded-clay concrete block for outer walls, 501 kg/m³. A common lightweight masonry unit in Germany."
+      }
+    ],
+    "Masonry - Brick": [
+      {
+        "uuid": "c916ceb3-a44d-40b7-8984-861afa589956",
+        "reason": "Sand-lime facing brick instead of fired clay. No kiln firing, so roughly half the A1–A3 per m³. It looks different (light grey or white)."
+      }
+    ],
+    "Insulation / Thermal Barriers - Rigid insulation": [
+      {
+        "uuid": "50d421e2-3a7b-4659-92a4-f20d6a52fcf0",
+        "reason": "Mineral wool facade board. About a third of the carbon of XPS. λ is similar (≈0.035), so the U-value hardly changes."
+      },
+      {
+        "uuid": "c91aa879-2826-4078-8bfa-baae349549cb",
+        "reason": "Wood fibre board. Stores biogenic carbon, so A1–A3 is negative. λ ≈ 0.040 is worse than XPS, so it needs about 15% more thickness for the same U-value (the swap keeps the thickness)."
+      },
+      {
+        "uuid": "121c71e8-0f4c-4529-b72e-331198d15f0f",
+        "reason": "EPS instead of XPS. Lower density, so less carbon per m³ at a similar λ."
+      }
+    ],
+    "Concrete - Cast In Situ": [
+      {
+        "uuid": "61c0c795-7116-407d-8635-68fe422f76a9",
+        "reason": "Ready-mix C25/30 with recycled aggregate. Same strength class, a small saving."
+      }
+    ],
+    "Ceramic Tile": [
+      {
+        "uuid": "91935678-1a09-43e0-8a84-294522407ac3",
+        "reason": "Unglazed stoneware tile. Leaving out the glaze firing cuts A1–A3 by about 60%."
+      }
+    ],
+    "Plasterboard": [
+      {
+        "uuid": "c0915390-0e80-4253-9345-71fd83ef3c99",
+        "reason": "Clay panel instead of gypsum board, for interior linings. Similar carbon, but no gypsum to landfill at end of life."
+      }
+    ],
+    "Wood - Flooring": [
+      {
+        "uuid": "19c8f194-c3ab-4797-9b1a-8f1788bf12d8",
+        "reason": "Multi-layer parquet. A thinner hardwood wear layer on a softwood core, so less timber per m²."
+      }
+    ]
+  }
+}

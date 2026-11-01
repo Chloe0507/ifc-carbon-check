@@ -9,7 +9,7 @@ Most BIM-to-LCA tools are closed plugins: you can't see which model data was mis
 3. **Carbon in 3D.** Embodied carbon (EN 15978, A1–A3 and C3–C4) per element, as a heatmap on the model, with honest coverage: anything estimated is labelled.
 4. **What-if.** Swap a material group for an alternative and watch the totals change.
 
-> Status: day 6 of a 10-day build. The app runs the readiness check, shows data coverage, exports issues as BCF, matches materials to Ökobaudat with a review step, calculates embodied carbon per element with a heatmap and a life-cycle chart, and has project settings for the system boundary. The material swap comes next.
+> Status: day 7 of a 10-day build. The app runs the readiness check, shows data coverage, exports issues as BCF, matches materials to Ökobaudat with a review step, calculates embodied carbon per element with a heatmap and a life-cycle chart, has project settings for the system boundary, and lets you test material swaps. Polish, a second model and the video come next.
 
 ## The readiness check
 
@@ -73,6 +73,14 @@ Checked by hand: the exterior brick-on-block wall (20.74 m³, 417 mm) gives 49.7
 
 The material library, the carbon totals and the heatmap all recalculate as soon as a setting changes. A4–A5 and the B modules are left out on purpose: the model has no site or use-stage data to pick a scenario from.
 
+## What-if: material swaps
+
+In the Carbon view, "What if… swap a material" replaces one IFC material's dataset in a scenario. The reviewed mapping isn't touched, and the model as designed stays as the baseline. The carbon card shows the scenario total against the baseline, each swap's saving, and the chart and heatmap update (the heatmap keeps the baseline's colour bins, so savings show as lighter elements).
+
+The picker offers an AI shortlist ([`public/data/swaps/duplex.json`](public/data/swaps/duplex.json)): lower-carbon alternatives with the same function, chosen from generic Ökobaudat data, each with a reason and a caveat. Below that, a search covers the whole database. Datasets outside the system boundary are shown but can't be picked. A swap keeps the layer thickness, so structural, fire and thermal equivalence have to be checked separately. The shortlist flags this where it matters, for example wood fibre needing about 15% more thickness than XPS for the same U-value.
+
+On the Duplex, two swaps save 15.4 t (−25%): pumice lightweight block instead of concrete block (−13.1 t) and wood fibre instead of XPS (−2.3 t).
+
 ## Run it locally
 
 ```bash
@@ -93,6 +101,7 @@ npm run dev     # opens on http://localhost:5173
 | `src/carbon.ts` | The carbon calculation: layer quantities × GWP per module, per element |
 | `src/charts.ts` | The life-cycle chart (stacked bars per element group, with hover values and a table view) |
 | `src/settings.ts` | Project settings: system boundary, EN 15804 version, reference area |
+| `src/swap.ts` | What-if swaps: scenario mapping and the alternative picker |
 | `src/lca-data.ts` | Dataset and mapping types, the system boundary and the scope-alignment check |
 | `src/library.ts` | The material library view: review table, dataset picker and search |
 | `scripts/oekobaudat.py` | Converts the Ökobaudat CSV export into the app's dataset file |

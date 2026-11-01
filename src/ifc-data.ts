@@ -45,6 +45,8 @@ export interface ModelData {
   lengthScale: number | null;
   elements: Map<number, ElementRecord>;
   storeys: Storey[];
+  /** Sum of the rooms' floor areas (m²) and where it came from, or null without rooms. */
+  floorArea: { value: number; rooms: number; source: string } | null;
 }
 
 /** The building elements the checks and the LCA cover. Furniture and MEP are out of scope. */
@@ -212,9 +214,38 @@ export async function readModel(bytes: Uint8Array): Promise<ModelData> {
       }
     }
 
+    // 8. Floor area from the rooms (IfcSpace), for kg CO2e per m².
+    let area = 0;
+    let rooms = 0;
+    const sources = new Set<string>();
+    const spaceIds = new Set(ids("IFCSPACE"));
+    const spaceArea = new Map<number, { value: number; source: string; rank: number }>();
+    for (const relId of ids("IFCRELDEFINESBYPROPERTIES")) {
+      const rel = line(relId);
+      const targets = (rel.RelatedObjects ?? []).map((o: any) => o.value).filter((id: number) => spaceIds.has(id));
+      if (!targets.length) continue;
+      const def = line(rel.RelatingPropertyDefinition.value, true);
+      // Prefer the standard quantity, then a property called Area (as Revit exports it).
+      const found =
+        (def.Quantities ?? []).map((q: any) => [q.Name?.value, q.AreaValue?.value]).find(([n]: any) => /^NetFloorArea$/i.test(n)) ??
+        (def.Quantities ?? []).map((q: any) => [q.Name?.value, q.AreaValue?.value]).find(([n]: any) => /^GrossFloorArea$/i.test(n)) ??
+        (def.HasProperties ?? []).map((p: any) => [p.Name?.value, p.NominalValue?.value]).find(([n]: any) => /^Area$/i.test(n));
+      if (!found || typeof found[1] !== "number") continue;
+      const rank = /NetFloorArea/i.test(found[0]) ? 0 : /GrossFloorArea/i.test(found[0]) ? 1 : 2;
+      const prev = spaceArea.get(targets[0]);
+      if (prev && prev.rank <= rank) continue;
+      for (const t of targets) spaceArea.set(t, { value: found[1] * scale * scale, source: `${def.Name?.value}.${found[0]}`, rank });
+    }
+    for (const a of spaceArea.values()) {
+      area += a.value;
+      rooms++;
+      sources.add(a.source);
+    }
+    const floorArea = rooms ? { value: area, rooms, source: [...sources].join(", ") } : null;
+
     const project = ids("IFCPROJECT")[0];
     const projectGuid = project !== undefined ? (line(project).GlobalId?.value ?? "") : "";
-    return { schema: ifc.GetModelSchema(modelId), projectGuid, lengthScale, elements, storeys };
+    return { schema: ifc.GetModelSchema(modelId), projectGuid, lengthScale, elements, storeys, floorArea };
   } finally {
     ifc.CloseModel(modelId);
   }

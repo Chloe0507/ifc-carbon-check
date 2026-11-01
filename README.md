@@ -9,7 +9,7 @@ Most BIM-to-LCA tools are closed plugins: you can't see which model data was mis
 3. **Carbon in 3D.** Embodied carbon (EN 15978, A1–A3 and C3–C4) per element, as a heatmap on the model, with honest coverage: anything estimated is labelled.
 4. **What-if.** Swap a material group for an alternative and watch the totals change.
 
-> Status: day 4 of a 10-day build. The viewer runs the readiness check, shows data coverage, exports issues as BCF, and matches materials to Ökobaudat with a review step. The carbon calculation comes next.
+> Status: day 5 of a 10-day build. The app runs the readiness check, shows data coverage, exports issues as BCF, matches materials to Ökobaudat with a review step, and calculates embodied carbon per element with a heatmap. Charts and the material swap come next.
 
 ## The readiness check
 
@@ -52,6 +52,16 @@ Carbon data comes from [ÖKOBAUDAT](https://www.oekobaudat.de) 2024-II, the Germ
 
 **Scope alignment.** The project sets one system boundary: A1–A3, C3 and C4 under EN 15804+A2. A dataset that is on another EN 15804 version, or has no A1–A3 or end-of-life value, is flagged as a scope mismatch. It only counts once the reviewer accepts it with a written reason, which is saved with the mapping. Ökobaudat datasets follow one end-of-life scenario, so recycled products declare C3 and landfilled ones C4. Either one counts as covering the end of life.
 
+## Embodied carbon
+
+For each element the app takes its volume (from IFC quantities, or from the 3D geometry when the file has none) and splits it over the material layers by thickness. Each layer's quantity is converted to the dataset's declared unit: m³ directly, kg with the dataset's density, m² as the wall or slab face area (volume ÷ total thickness). The quantity is multiplied by the dataset's GWP for each module inside the system boundary. [`src/carbon.ts`](src/carbon.ts) does this, and the selected-element card shows every step.
+
+**Duplex result:** 62 t CO₂e for A1–A3 + C3 + C4, or 147 kg CO₂e per m² of room area (422 m² over 21 rooms, read from the IfcSpace areas). A1–A3 is 39 t and C3 is 22 t. C3 is large because timber and plastics are incinerated at end of life, which releases the carbon the timber stored and A1–A3 credited. 96 of 154 elements are calculated. The other 58 are 55 elements with no material (doors, windows, stairs, railings, footings) and 3 with no geometry. This result uses AI matches that nobody has reviewed yet, and the app labels it provisional until they're approved. A switch in the carbon card leaves unreviewed matches out of the total.
+
+**Heatmap:** elements are coloured by kg CO₂e in five quintile bins, so each colour holds about a fifth of the calculated elements. The orange ramp was checked with a palette validator (one hue, steps that get darker in order, and a lightest step that still shows against the background).
+
+Checked by hand: the exterior brick-on-block wall (20.74 m³, 417 mm) gives 49.7 m² of face area and 2.6 t from 4.57 m³ of facing brick. A W310×60 beam (0.057 m³ = 451 kg) gives 253 kg.
+
 ## Run it locally
 
 ```bash
@@ -69,6 +79,7 @@ npm run dev     # opens on http://localhost:5173
 | `src/checks.ts` | The readiness rules (B1–B5, R1–R7) and the engine that runs them |
 | `src/coverage.ts` | Measures where each element's material and quantity come from, and how many elements can be calculated |
 | `src/bcf.ts` | Writes readiness issues as a BCF 2.1 zip (markup, viewpoint, snapshot per issue) |
+| `src/carbon.ts` | The carbon calculation: layer quantities × GWP per module, per element |
 | `src/lca-data.ts` | Dataset and mapping types, the system boundary and the scope-alignment check |
 | `src/library.ts` | The material library view: review table, dataset picker and search |
 | `scripts/oekobaudat.py` | Converts the Ökobaudat CSV export into the app's dataset file |

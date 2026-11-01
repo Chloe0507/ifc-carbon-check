@@ -1,7 +1,7 @@
 // Reads the information we need out of a loaded model: what categories it
 // holds, and the attributes, property sets and materials of one element.
 import * as FRAGS from "@thatopen/fragments";
-import type { MaterialIndex, MaterialLayer } from "./ifc-data";
+import type { MaterialLayer, ModelData } from "./ifc-data";
 
 export interface ModelSummary {
   schema: string;
@@ -17,12 +17,6 @@ export interface ElementInfo {
   guid: string;
   materials: MaterialLayer[];
   psets: { name: string; props: { name: string; value: string }[] }[];
-}
-
-/** The schema name written in the IFC header, e.g. IFC2X3 or IFC4. */
-export function readSchema(bytes: Uint8Array) {
-  const head = new TextDecoder().decode(bytes.subarray(0, 4000));
-  return head.match(/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/i)?.[1] ?? "unknown";
 }
 
 // Categories that are drawn but are not building elements we assess.
@@ -54,7 +48,7 @@ export async function summarise(model: FRAGS.FragmentsModel, schema: string): Pr
 export async function describeElement(
   model: FRAGS.FragmentsModel,
   localId: number,
-  materials: MaterialIndex,
+  modelData: ModelData,
 ): Promise<ElementInfo> {
   const [data] = await model.getItemsData([localId], {
     attributesDefault: true,
@@ -68,7 +62,7 @@ export async function describeElement(
     category: prettyCategory(String(attr(data, "_category") ?? "")),
     name: String(attr(data, "Name") ?? "Unnamed"),
     guid: String(attr(data, "_guid") ?? ""),
-    materials: materials.get(localId) ?? [],
+    materials: modelData.elements.get(localId)?.materials ?? [],
     psets: [],
   };
 

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LCA-ready information requirements for IFC Carbon Check.
+     Rules B1, B4, B5, R2 and R3 can't be expressed in IDS 1.0 (file validity,
+     storey order, duplicates, layer thicknesses, name quality); the app checks
+     those in code. See src/checks.ts. -->
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+  <info>
+    <title>LCA-ready model requirements</title>
+    <version>0.1</version>
+    <description>Minimum information a building model needs before an EN 15978 embodied carbon assessment. Based on EN 17412-1 (Level of Information Need) and the Dutch BIM basis ILS.</description>
+    <date>2026-11-01</date>
+    <purpose>Life cycle assessment (embodied carbon)</purpose>
+  </info>
+  <specifications>
+    <specification name="B2 No generic proxy elements" identifier="B2" ifcVersion="IFC2X3 IFC4" description="Building elements must use a specific IFC class.">
+      <applicability minOccurs="0" maxOccurs="0">
+        <entity>
+          <name><simpleValue>IFCBUILDINGELEMENTPROXY</simpleValue></name>
+        </entity>
+      </applicability>
+    </specification>
+    <specification name="B3 Contained in a building storey" identifier="B3" ifcVersion="IFC2X3 IFC4" description="Every element is placed in a storey, so results can be reported per storey.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+          <entity>
+            <name>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="IFCWALL"/>
+                <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+                <xs:enumeration value="IFCCURTAINWALL"/>
+                <xs:enumeration value="IFCSLAB"/>
+                <xs:enumeration value="IFCROOF"/>
+                <xs:enumeration value="IFCBEAM"/>
+                <xs:enumeration value="IFCCOLUMN"/>
+                <xs:enumeration value="IFCFOOTING"/>
+                <xs:enumeration value="IFCPILE"/>
+                <xs:enumeration value="IFCSTAIR"/>
+                <xs:enumeration value="IFCSTAIRFLIGHT"/>
+                <xs:enumeration value="IFCRAMP"/>
+                <xs:enumeration value="IFCDOOR"/>
+                <xs:enumeration value="IFCWINDOW"/>
+                <xs:enumeration value="IFCCOVERING"/>
+                <xs:enumeration value="IFCRAILING"/>
+                <xs:enumeration value="IFCMEMBER"/>
+                <xs:enumeration value="IFCPLATE"/>
+              </xs:restriction>
+            </name>
+          </entity>
+      </applicability>
+      <requirements>
+        <partOf relation="IFCRELCONTAINEDINSPATIALSTRUCTURE" cardinality="required">
+          <entity><name><simpleValue>IFCBUILDINGSTOREY</simpleValue></name></entity>
+        </partOf>
+      </requirements>
+    </specification>
+    <specification name="R1 Material assigned" identifier="R1" ifcVersion="IFC2X3 IFC4" description="Without a material there is nothing to match to an EPD.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+          <entity>
+            <name>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="IFCWALL"/>
+                <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+                <xs:enumeration value="IFCCURTAINWALL"/>
+                <xs:enumeration value="IFCSLAB"/>
+                <xs:enumeration value="IFCROOF"/>
+                <xs:enumeration value="IFCBEAM"/>
+                <xs:enumeration value="IFCCOLUMN"/>
+                <xs:enumeration value="IFCFOOTING"/>
+                <xs:enumeration value="IFCPILE"/>
+                <xs:enumeration value="IFCSTAIR"/>
+                <xs:enumeration value="IFCSTAIRFLIGHT"/>
+                <xs:enumeration value="IFCRAMP"/>
+                <xs:enumeration value="IFCDOOR"/>
+                <xs:enumeration value="IFCWINDOW"/>
+                <xs:enumeration value="IFCCOVERING"/>
+                <xs:enumeration value="IFCRAILING"/>
+                <xs:enumeration value="IFCMEMBER"/>
+                <xs:enumeration value="IFCPLATE"/>
+              </xs:restriction>
+            </name>
+          </entity>
+      </applicability>
+      <requirements>
+        <material cardinality="required"/>
+      </requirements>
+    </specification>
+    <specification name="R4 Base quantities" identifier="R4" ifcVersion="IFC2X3 IFC4" description="A volume or area is the quantity side of quantity x emission factor.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+          <entity>
+            <name>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="IFCWALL"/>
+                <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+                <xs:enumeration value="IFCCURTAINWALL"/>
+                <xs:enumeration value="IFCSLAB"/>
+                <xs:enumeration value="IFCROOF"/>
+                <xs:enumeration value="IFCBEAM"/>
+                <xs:enumeration value="IFCCOLUMN"/>
+                <xs:enumeration value="IFCFOOTING"/>
+                <xs:enumeration value="IFCPILE"/>
+                <xs:enumeration value="IFCSTAIR"/>
+                <xs:enumeration value="IFCSTAIRFLIGHT"/>
+                <xs:enumeration value="IFCRAMP"/>
+                <xs:enumeration value="IFCDOOR"/>
+                <xs:enumeration value="IFCWINDOW"/>
+                <xs:enumeration value="IFCCOVERING"/>
+                <xs:enumeration value="IFCRAILING"/>
+                <xs:enumeration value="IFCMEMBER"/>
+                <xs:enumeration value="IFCPLATE"/>
+              </xs:restriction>
+            </name>
+          </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required">
+          <propertySet><xs:restriction base="xs:string"><xs:pattern value="Qto_.*|BaseQuantities"/></xs:restriction></propertySet>
+          <baseName><xs:restriction base="xs:string"><xs:pattern value="(Net|Gross)(Volume|Area|SideArea|FootprintArea)"/></xs:restriction></baseName>
+        </property>
+      </requirements>
+    </specification>
+    <specification name="R5 IsExternal set" identifier="R5" ifcVersion="IFC2X3 IFC4" description="Separates the building envelope from the interior.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+          <entity>
+            <name>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="IFCWALL"/>
+                <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+                <xs:enumeration value="IFCCURTAINWALL"/>
+                <xs:enumeration value="IFCSLAB"/>
+                <xs:enumeration value="IFCROOF"/>
+                <xs:enumeration value="IFCBEAM"/>
+                <xs:enumeration value="IFCCOLUMN"/>
+                <xs:enumeration value="IFCFOOTING"/>
+                <xs:enumeration value="IFCPILE"/>
+                <xs:enumeration value="IFCSTAIR"/>
+                <xs:enumeration value="IFCSTAIRFLIGHT"/>
+                <xs:enumeration value="IFCRAMP"/>
+                <xs:enumeration value="IFCDOOR"/>
+                <xs:enumeration value="IFCWINDOW"/>
+                <xs:enumeration value="IFCCOVERING"/>
+                <xs:enumeration value="IFCRAILING"/>
+                <xs:enumeration value="IFCMEMBER"/>
+                <xs:enumeration value="IFCPLATE"/>
+              </xs:restriction>
+            </name>
+          </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCBOOLEAN">
+          <propertySet><xs:restriction base="xs:string"><xs:pattern value="Pset_.*Common"/></xs:restriction></propertySet>
+          <baseName><simpleValue>IsExternal</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+    <specification name="R6 LoadBearing set" identifier="R6" ifcVersion="IFC2X3 IFC4" description="Material swaps on load-bearing elements need a structural warning.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCBOOLEAN">
+          <propertySet><xs:restriction base="xs:string"><xs:pattern value="Pset_.*Common"/></xs:restriction></propertySet>
+          <baseName><simpleValue>LoadBearing</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+    <specification name="R7 Classification reference" identifier="R7" ifcVersion="IFC2X3 IFC4" description="Groups LCA results by building part.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+          <entity>
+            <name>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="IFCWALL"/>
+                <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+                <xs:enumeration value="IFCCURTAINWALL"/>
+                <xs:enumeration value="IFCSLAB"/>
+                <xs:enumeration value="IFCROOF"/>
+                <xs:enumeration value="IFCBEAM"/>
+                <xs:enumeration value="IFCCOLUMN"/>
+                <xs:enumeration value="IFCFOOTING"/>
+                <xs:enumeration value="IFCPILE"/>
+                <xs:enumeration value="IFCSTAIR"/>
+                <xs:enumeration value="IFCSTAIRFLIGHT"/>
+                <xs:enumeration value="IFCRAMP"/>
+                <xs:enumeration value="IFCDOOR"/>
+                <xs:enumeration value="IFCWINDOW"/>
+                <xs:enumeration value="IFCCOVERING"/>
+                <xs:enumeration value="IFCRAILING"/>
+                <xs:enumeration value="IFCMEMBER"/>
+                <xs:enumeration value="IFCPLATE"/>
+              </xs:restriction>
+            </name>
+          </entity>
+      </applicability>
+      <requirements>
+        <classification cardinality="required">
+          <system><xs:restriction base="xs:string"><xs:pattern value=".+"/></xs:restriction></system>
+        </classification>
+      </requirements>
+    </specification>
+  </specifications>
+</ids>

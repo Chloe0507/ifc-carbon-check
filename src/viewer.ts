@@ -8,7 +8,14 @@ import * as FRAGS from "@thatopen/fragments";
 // any folder (for example a GitHub Pages sub-path).
 const asset = (path: string) => new URL(path, window.location.href).href;
 
-const SELECT_COLOR = new THREE.Color("#0f9d7a");
+const SELECT_COLOR = new THREE.Color("#1f6feb");
+
+const solid = (color: THREE.Color): FRAGS.MaterialDefinition => ({
+  color,
+  renderedFaces: FRAGS.RenderedFaces.TWO,
+  opacity: 1,
+  transparent: false,
+});
 
 export class Viewer {
   readonly components = new OBC.Components();
@@ -44,14 +51,6 @@ export class Viewer {
       this.fragments.core.update(true);
     });
 
-    // Avoid flickering where coplanar faces overlap.
-    this.fragments.core.models.materials.list.onItemSet.add(({ value: material }) => {
-      if (!("isLodMaterial" in material && material.isLodMaterial)) {
-        material.polygonOffset = true;
-        material.polygonOffsetUnits = 1;
-        material.polygonOffsetFactor = Math.random();
-      }
-    });
   }
 
   /** Loads an IFC file (as raw bytes), replacing any model already shown. */
@@ -96,17 +95,53 @@ export class Viewer {
     });
   }
 
-  async select(localId: number | null) {
+  // Colours are applied as highlights, the one styling layer fragments keep
+  // per item. We remember them so a selection can be drawn on top and undone.
+  private painted: { ids: number[]; style: FRAGS.MaterialDefinition }[] = [];
+
+  /**
+   * Colours groups of elements; everything else fades out when `fadeOthers` is set.
+   * Pass no groups to go back to the model's own colours.
+   */
+  async paint(groups: { ids: number[]; color: string }[], fadeOthers = true) {
+    if (!this.model) return;
+    this.painted = groups
+      .filter((g) => g.ids.length)
+      .map((g) => ({ ids: g.ids, style: solid(new THREE.Color(g.color)) }));
+    if (groups.length && fadeOthers) {
+      const painted = new Set(groups.flatMap((g) => g.ids));
+      const others = (await this.model.getItemsIdsWithGeometry()).filter((id) => !painted.has(id));
+      this.painted.unshift({ ids: others, style: solid(new THREE.Color("#e4e9ed")) });
+    }
+    await this.redraw();
+  }
+
+  private async redraw(selected: number | null = null) {
     if (!this.model) return;
     await this.model.resetHighlight();
-    if (localId !== null) {
-      await this.model.highlight([localId], {
-        color: SELECT_COLOR,
-        renderedFaces: FRAGS.RenderedFaces.TWO,
-        opacity: 1,
-        transparent: false,
-      });
-    }
+    for (const p of this.painted) await this.model.highlight(p.ids, p.style);
+    if (selected !== null) await this.model.highlight([selected], solid(SELECT_COLOR));
+    // Highlights are applied in the fragments worker; refresh once now and once
+    // more after it settles, otherwise some tiles keep their old colours.
     await this.fragments.core.update(true);
+    await new Promise((r) => setTimeout(r, 300));
+    await this.fragments.core.update(true);
+  }
+
+  /** A key per element from its bounding box (rounded to 1 cm), to spot duplicates. */
+  async boxKeys(ids: number[]) {
+    const keys = new Map<number, string>();
+    if (!this.model || !ids.length) return keys;
+    const boxes = await this.model.getBoxes(ids);
+    const r = (v: THREE.Vector3) => [v.x, v.y, v.z].map((n) => Math.round(n * 100)).join(",");
+    ids.forEach((id, i) => {
+      const b = boxes[i];
+      if (b && !b.isEmpty()) keys.set(id, `${r(b.min)}|${r(b.max)}`);
+    });
+    return keys;
+  }
+
+  async select(localId: number | null) {
+    await this.redraw(localId);
   }
 }

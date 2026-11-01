@@ -35,7 +35,7 @@
     <div class="layout">
       <nav class="rail">
         <a class="rail-item active" data-view="overview"><span class="ico">▦</span>Overview</a>
-        <a class="rail-item" data-view="readiness"><span class="ico">✓</span>Readiness check<span class="soon">day 2</span></a>
+        <a class="rail-item" data-view="readiness"><span class="ico">✓</span>Readiness check</a>
         <a class="rail-item" data-view="carbon"><span class="ico">◐</span>Carbon<span class="soon">day 5</span></a>
         <a class="rail-item" data-view="library"><span class="ico">≡</span>Material library<span class="soon">day 4</span></a>
         <div class="rail-sep"></div>
@@ -53,19 +53,25 @@
           <p class="hint" id="kpi-elements-note"></p>
           <ul class="cat-list" id="cat-list"></ul>
         </article>
-        <article class="card">
-          <h3>LCA readiness</h3>
-          <div class="kpi muted"><span>–</span><small>% fully specified</small></div>
-          <p class="hint">The IDS check arrives on day 2.</p>
+        <article class="card card-grow" id="readiness-card">
+          <h3>Readiness check</h3>
+          <div class="kpi-pair">
+            <div><div class="kpi"><span id="kpi-bim">–</span><small>%</small></div><p class="hint">BIM-ready</p></div>
+            <div><div class="kpi"><span id="kpi-lca">–</span><small>%</small></div><p class="hint">LCA-ready</p></div>
+          </div>
+          <p class="hint" id="kpi-ready-note"></p>
+          <ul class="rule-list" id="rule-list"></ul>
+          <a class="ids-link" href="requirements/lca-ready.ids" download>Download the requirements (IDS)</a>
         </article>
       </section>
 
       <main class="viewport-wrap">
         <div id="viewport"></div>
         <div class="loading" id="loading">Loading model…</div>
+        <div class="legend hidden" id="legend"></div>
         <div class="modebar">
           <button class="mode active" data-mode="normal">Model</button>
-          <button class="mode" data-mode="readiness" disabled>Readiness</button>
+          <button class="mode" data-mode="readiness">Readiness</button>
           <button class="mode" data-mode="carbon" disabled>Carbon heatmap</button>
           <span class="modebar-sep"></span>
           <button class="mode" id="btn-fit">Fit view</button>
@@ -88,7 +94,7 @@
 
       <footer class="ticker">
         <span class="ticker-title">Readiness issues</span>
-        <span class="ticker-body" id="ticker">No checks run yet. They'll appear here as a running list.</span>
+        <div class="ticker-body" id="ticker"><span>No checks run yet.</span></div>
       </footer>
     </div>
 

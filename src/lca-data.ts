@@ -87,7 +87,8 @@ export function scopeIssues(ds: Dataset, boundary: SystemBoundary): string[] {
   // declares C3 (processing) and a landfilled one C4 (disposal). One of the two
   // is enough; neither means the end of life is missing.
   const eol: Module[] = boundary.modules.filter((m) => m === "C3" || m === "C4");
-  const missing = boundary.modules.filter((m) => !eol.includes(m) && ds.gwp[m] === undefined);
+  // D is reported for information only, so a dataset without it still fits.
+  const missing = boundary.modules.filter((m) => m !== "D" && !eol.includes(m) && ds.gwp[m] === undefined);
   if (eol.length && eol.every((m) => ds.gwp[m] === undefined)) missing.push(eol.join("/") as Module);
   if (missing.length) issues.push(`no value for ${missing.join(", ")}`);
   return issues;

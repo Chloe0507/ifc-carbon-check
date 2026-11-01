@@ -9,7 +9,7 @@ Most BIM-to-LCA tools are closed plugins: you can't see which model data was mis
 3. **Carbon in 3D.** Embodied carbon (EN 15978, A1–A3 and C3–C4) per element, as a heatmap on the model, with honest coverage: anything estimated is labelled.
 4. **What-if.** Swap a material group for an alternative and watch the totals change.
 
-> Status: day 5 of a 10-day build. The app runs the readiness check, shows data coverage, exports issues as BCF, matches materials to Ökobaudat with a review step, and calculates embodied carbon per element with a heatmap. Charts and the material swap come next.
+> Status: day 6 of a 10-day build. The app runs the readiness check, shows data coverage, exports issues as BCF, matches materials to Ökobaudat with a review step, calculates embodied carbon per element with a heatmap and a life-cycle chart, and has project settings for the system boundary. The material swap comes next.
 
 ## The readiness check
 
@@ -62,6 +62,17 @@ For each element the app takes its volume (from IFC quantities, or from the 3D g
 
 Checked by hand: the exterior brick-on-block wall (20.74 m³, 417 mm) gives 49.7 m² of face area and 2.6 t from 4.57 m³ of facing brick. A W310×60 beam (0.057 m³ = 451 kg) gives 253 kg.
 
+## Life-cycle chart and project settings
+
+**Chart.** In the Carbon view, a stacked bar per element group (walls, floors and slabs, roof, beams and columns, coverings) shows how its carbon splits over the life-cycle modules. Negative values (carbon stored in timber at A1–A3, benefits in D) extend left of a zero line. Hovering a segment shows its value, and the same numbers are available as a table. On the Duplex the walls carry 44 t of the 62 t, almost all of it A1–A3 from brick and concrete block. The floors and roof show the timber story: A1–A3 is slightly negative because of the stored carbon, and C3 releases it at end of life.
+
+**Project settings** set the system boundary used everywhere else. The settings are:
+- **Modules:** C3, C4 and D can each be switched on or off. A1–A3 is always included. Module D is shown next to the total and never added to it, as EN 15978 requires. On the Duplex D is −6.1 t.
+- **EN 15804 version:** +A2 or +A1. Switching to +A1 flags all 17 Duplex matches as scope mismatches, because every dataset they use is +A2. That's a quick way to see the scope check working.
+- **Reference area:** the room area from the model, or an area typed in, such as the gross floor area from the drawings.
+
+The material library, the carbon totals and the heatmap all recalculate as soon as a setting changes. A4–A5 and the B modules are left out on purpose: the model has no site or use-stage data to pick a scenario from.
+
 ## Run it locally
 
 ```bash
@@ -80,6 +91,8 @@ npm run dev     # opens on http://localhost:5173
 | `src/coverage.ts` | Measures where each element's material and quantity come from, and how many elements can be calculated |
 | `src/bcf.ts` | Writes readiness issues as a BCF 2.1 zip (markup, viewpoint, snapshot per issue) |
 | `src/carbon.ts` | The carbon calculation: layer quantities × GWP per module, per element |
+| `src/charts.ts` | The life-cycle chart (stacked bars per element group, with hover values and a table view) |
+| `src/settings.ts` | Project settings: system boundary, EN 15804 version, reference area |
 | `src/lca-data.ts` | Dataset and mapping types, the system boundary and the scope-alignment check |
 | `src/library.ts` | The material library view: review table, dataset picker and search |
 | `scripts/oekobaudat.py` | Converts the Ökobaudat CSV export into the app's dataset file |

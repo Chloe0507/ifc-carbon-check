@@ -37,6 +37,21 @@ export interface CarbonReport {
   missing: Map<number, string>;
   /** Layers skipped inside otherwise calculated elements. */
   skippedLayers: number;
+  /** Per element group (walls, floors, roof…), GWP per module. */
+  byGroup: { group: string; modules: Partial<Record<Module, number>>; total: number }[];
+}
+
+/** Element groups for the life-cycle chart, in reading order. */
+export const GROUPS = ["Walls", "Floors and slabs", "Roof", "Beams and columns", "Coverings", "Other"] as const;
+
+export function groupOf(el: ElementRecord, all: Map<number, ElementRecord> | undefined) {
+  const parent = el.parentId !== null ? all?.get(el.parentId) : undefined;
+  if (el.ifcClass === "IFCROOF" || parent?.ifcClass === "IFCROOF") return "Roof";
+  if (/^IFC(WALL|WALLSTANDARDCASE|CURTAINWALL)$/.test(el.ifcClass)) return "Walls";
+  if (el.ifcClass === "IFCSLAB") return "Floors and slabs";
+  if (/^IFC(BEAM|COLUMN|MEMBER|FOOTING|PILE)$/.test(el.ifcClass)) return "Beams and columns";
+  if (el.ifcClass === "IFCCOVERING") return "Coverings";
+  return "Other";
 }
 
 const IFC_VOLUME = /^(net|gross)volume$/i;
@@ -55,6 +70,7 @@ export function calculate(
   byUuid: Map<string, Dataset>,
   boundary: SystemBoundary,
   includeProvisional: boolean,
+  all?: Map<number, ElementRecord>,
 ): CarbonReport {
   const report: CarbonReport = {
     elements: new Map(),
@@ -64,7 +80,9 @@ export function calculate(
     provisionalTotal: 0,
     missing: new Map(),
     skippedLayers: 0,
+    byGroup: [],
   };
+  const groups = new Map<string, { modules: Partial<Record<Module, number>>; total: number }>();
   const byMaterial = new Map<string, { total: number; provisional: boolean }>();
 
   for (const el of assessed) {
@@ -112,7 +130,8 @@ export function calculate(
         const g = ds!.gwp[mod];
         if (g === undefined) continue;
         r.gwp[mod] = quantity * g;
-        r.total += quantity * g;
+        // Module D (benefits beyond the system boundary) is reported next to the total, never in it (EN 15978).
+        if (mod !== "D") r.total += quantity * g;
       }
       return r;
     });
@@ -132,7 +151,11 @@ export function calculate(
       provisional: counted.some((l) => l.provisional),
     };
     report.elements.set(el.id, result);
+    const g = groups.get(groupOf(el, all)) ?? { modules: {}, total: 0 };
+    groups.set(groupOf(el, all), g);
     for (const l of counted) {
+      g.total += l.total;
+      for (const [mod, v] of Object.entries(l.gwp)) g.modules[mod as Module] = (g.modules[mod as Module] ?? 0) + v;
       report.total += l.total;
       if (l.provisional) report.provisionalTotal += l.total;
       for (const [mod, v] of Object.entries(l.gwp)) report.byModule[mod as Module] = (report.byModule[mod as Module] ?? 0) + v;
@@ -142,6 +165,7 @@ export function calculate(
       byMaterial.set(l.material, agg);
     }
   }
+  report.byGroup = GROUPS.filter((g) => groups.has(g)).map((g) => ({ group: g, ...groups.get(g)! }));
   report.byMaterial = [...byMaterial].map(([material, v]) => ({ material, ...v })).sort((a, b) => b.total - a.total);
   return report;
 }

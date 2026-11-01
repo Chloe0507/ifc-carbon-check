@@ -39,7 +39,7 @@
         <a class="rail-item" data-view="carbon"><span class="ico">◐</span>Carbon</a>
         <a class="rail-item" data-view="library"><span class="ico">≡</span>Material library</a>
         <div class="rail-sep"></div>
-        <a class="rail-item" data-view="settings"><span class="ico">⚙</span>Project settings<span class="soon">day 6</span></a>
+        <a class="rail-item" data-view="settings"><span class="ico">⚙</span>Project settings</a>
         <label class="rail-upload">
           <input type="file" id="file-input" accept=".ifc" hidden />
           Load your own IFC
@@ -77,6 +77,7 @@
         <div class="loading" id="loading">Loading model…</div>
         <div class="legend hidden" id="legend"></div>
         <section class="library hidden" id="library"></section>
+        <section class="library hidden" id="settings"></section>
         <div class="modebar">
           <button class="mode active" data-mode="normal">Model</button>
           <button class="mode" data-mode="readiness">Readiness</button>
@@ -87,7 +88,11 @@
       </main>
 
       <section class="cards cards-right">
-        <article class="card">
+        <article class="card hidden lc" id="lifecycle-card">
+          <h3>Carbon by element group and module</h3>
+          <div id="lifecycle"></div>
+        </article>
+        <article class="card" id="coverage-card">
           <h3>LCA data coverage</h3>
           <div class="kpi"><span id="kpi-calc">–</span><small>%</small></div>
           <p class="hint" id="kpi-calc-note">Carbon can be calculated for this share of elements.</p>

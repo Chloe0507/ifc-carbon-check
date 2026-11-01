@@ -309,3 +309,31 @@ html, body {
 .props dl.carbon-dl dd { font-weight: 600; }
 .props dl.carbon-dl dd .hint { font-weight: 400; }
 .kpi small { white-space: nowrap; }
+
+/* Life-cycle chart */
+.lc { position: relative; }
+.lc-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--text-2); margin-bottom: 8px; }
+.lc-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.lc-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.lc-row { margin: 8px 0 10px; }
+.lc-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.lc-label .num { font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+.lc-track { position: relative; height: 14px; }
+.lc-track .seg { position: absolute; top: 0; height: 14px; border-right: 2px solid var(--surface); cursor: default; }
+.lc-track .seg:last-child { border-radius: 0 4px 4px 0; }
+.lc-zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text-3); }
+.lc-tip { position: absolute; z-index: 3; pointer-events: none; background: var(--text); color: #fff; font-size: 11.5px; padding: 5px 8px; border-radius: 6px; max-width: 200px; }
+.lc-tip.hidden { display: none; }
+.lc-table { margin-top: 10px; font-size: 11.5px; color: var(--text-2); }
+.lc-table summary { cursor: pointer; color: var(--accent); }
+.lc-table table { width: 100%; border-collapse: collapse; margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; }
+.lc-table th, .lc-table td { text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.lc-table td:first-child { text-align: left; font-family: Inter, system-ui, sans-serif; }
+
+/* Settings */
+.set-group { margin-top: 22px; max-width: 720px; }
+.set-group h3 { font-size: 13px; margin: 0 0 8px; color: var(--text); }
+.set-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; }
+.set-row span { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.set-row small { color: var(--text-3); font-size: 12px; }
+.set-row input[type="number"] { width: 90px; font: inherit; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; }

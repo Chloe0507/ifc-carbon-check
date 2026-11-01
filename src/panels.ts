@@ -173,7 +173,7 @@ export function renderCarbon(
   const order = ["A1-A3", "C3", "C4", "D"];
   const byModule = Object.entries(r.byModule).sort(([a], [b]) => order.indexOf(a) - order.indexOf(b));
   const modules = byModule
-    .map(([m, v]) => `<li><span class="rule-id">${m}</span><span class="bar"><i style="width:${(Math.abs(v) / max) * 100}%"></i></span><span class="num">${kg(v)}</span></li>`)
+    .map(([m, v]) => `<li${m === "D" ? ' title="Beyond the system boundary: not in the total"' : ""}><span class="rule-id">${m === "D" ? "D (not in total)" : m}</span><span class="bar"><i style="width:${(Math.abs(v) / max) * 100}%"></i></span><span class="num">${kg(v)}</span></li>`)
     .join("");
   const top = r.byMaterial.slice(0, 6);
   const maxMat = Math.max(...top.map((m) => Math.abs(m.total)), 1);
@@ -187,8 +187,8 @@ export function renderCarbon(
 
   el.innerHTML = `
     <div class="kpi-pair">
-      <div><div class="kpi"><span>${(r.total / 1000).toLocaleString("en", { maximumFractionDigits: 1 })}</span><small>t CO₂e</small></div><p class="hint">Total, ${byModule.map(([m]) => m).join(" + ")}</p></div>
-      <div><div class="kpi"><span>${perM2 === null ? "–" : Math.round(perM2)}</span><small>kg/m²</small></div><p class="hint">${opts.floorArea ? `per m² of room area (${Math.round(opts.floorArea.value)} m², ${opts.floorArea.rooms} rooms)` : "no rooms in the model"}</p></div>
+      <div><div class="kpi"><span>${(r.total / 1000).toLocaleString("en", { maximumFractionDigits: 1 })}</span><small>t CO₂e</small></div><p class="hint">Total, ${byModule.filter(([m]) => m !== "D").map(([m]) => m).join(" + ")}</p></div>
+      <div><div class="kpi"><span>${perM2 === null ? "–" : Math.round(perM2)}</span><small>kg/m²</small></div><p class="hint">${opts.floorArea ? (opts.floorArea.rooms ? `per m² of room area (${Math.round(opts.floorArea.value)} m², ${opts.floorArea.rooms} rooms)` : `per m² of the area set in project settings (${Math.round(opts.floorArea.value)} m²)`) : "no rooms in the model; set an area in project settings"}</p></div>
     </div>
     <p class="hint">${r.elements.size} of ${opts.assessed} elements calculated${missing ? `; not calculated: ${missing}` : ""}.</p>
     ${opts.unreviewed === 0 ? "" : `<label class="toggle"><input type="checkbox" id="carbon-provisional" ${opts.includeProvisional ? "checked" : ""}/>

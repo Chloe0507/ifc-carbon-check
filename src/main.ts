@@ -8,6 +8,8 @@ import {
   renderCarbon, renderCategories, renderCoverage, renderProperties, renderRules, renderTicker,
 } from "./panels";
 import { calculate, type CarbonReport } from "./carbon";
+import { renderLifecycleChart } from "./charts";
+import { loadSettings, renderSettings } from "./settings";
 import { mappingState } from "./lca-data";
 import { readModel, type ModelData } from "./ifc-data";
 import { runChecks, type CheckReport } from "./checks";
@@ -37,11 +39,12 @@ const state = {
   carbon: null as CarbonReport | null,
   includeProvisional: true,
   rule: null as string | null, // the rule picked in the readiness card, if any
-  view: "overview" as "overview" | "readiness" | "carbon" | "library",
+  view: "overview" as "overview" | "readiness" | "carbon" | "library" | "settings",
   datasets: [] as Dataset[],
   byUuid: new Map<string, Dataset>(),
   mappings: new Map<string, Mapping>(),
   boundary: DEFAULT_BOUNDARY,
+  area: null as number | null, // manual reference area, m²
   reviewNote: "",
 };
 
@@ -102,6 +105,23 @@ function renderReadiness() {
   renderTicker($("ticker"), report);
 }
 
+function applySettings() {
+  const settings = loadSettings();
+  state.boundary = settings.boundary;
+  state.area = settings.area;
+}
+applySettings();
+
+function renderSettingsView() {
+  renderSettings($("settings"), { boundary: state.boundary, area: state.area }, state.data?.floorArea ?? null, async () => {
+    applySettings();
+    renderSettingsView();
+    renderLibraryView();
+    recalculate();
+    if (state.mode === "carbon") await applyMode();
+  });
+}
+
 async function loadMappings(fileName: string) {
   const lca = await loadLca(MAPPINGS[fileName] ?? "");
   state.datasets = lca.data.datasets;
@@ -111,19 +131,23 @@ async function loadMappings(fileName: string) {
   state.reviewNote = lca.mapping?.reviewedBy ? `Published mapping reviewed by ${lca.mapping.reviewedBy} on ${lca.mapping.reviewed}.` : "";
   for (const [name, m] of Object.entries(loadEdits(fileName))) state.mappings.set(name, m);
   renderLibraryView();
+  renderSettingsView();
   recalculate();
 }
 
 /** Runs the carbon calculation with the current mappings and refreshes the carbon card. */
 function recalculate() {
   if (!state.report || !state.data) return;
-  state.carbon = calculate(state.report.assessed, state.volumes, state.mappings, state.byUuid, state.boundary, state.includeProvisional);
+  state.carbon = calculate(
+    state.report.assessed, state.volumes, state.mappings, state.byUuid, state.boundary, state.includeProvisional, state.data.elements,
+  );
+  renderLifecycleChart($("lifecycle"), state.carbon, state.boundary.modules);
   const unreviewed = [...state.mappings.values()].filter((m) => {
     const ds = m.uuid ? state.byUuid.get(m.uuid) : undefined;
     return mappingState(m, ds, state.boundary) === "to-review";
   }).length;
   renderCarbon($("carbon"), state.carbon, {
-    floorArea: state.data.floorArea,
+    floorArea: state.area ? { value: state.area, rooms: 0 } : state.data.floorArea,
     includeProvisional: state.includeProvisional,
     unreviewed,
     assessed: state.report.assessed.length,
@@ -181,7 +205,10 @@ const viewFor = (mode: typeof state.mode) => (mode === "normal" ? "overview" : m
 function setView(view: typeof state.view) {
   state.view = view;
   $("library").classList.toggle("hidden", view !== "library");
-  document.querySelector(".layout")!.classList.toggle("lib-open", view === "library");
+  $("settings").classList.toggle("hidden", view !== "settings");
+  document.querySelector(".layout")!.classList.toggle("lib-open", view === "library" || view === "settings");
+  $("lifecycle-card").classList.toggle("hidden", view !== "carbon");
+  $("coverage-card").classList.toggle("hidden", view === "carbon");
   $("carbon-card").classList.toggle("hidden", view !== "carbon");
   $("readiness-card").classList.toggle("hidden", view === "carbon");
   document.querySelectorAll<HTMLElement>(".rail-item").forEach((a) => a.classList.toggle("active", a.dataset.view === view));
@@ -192,7 +219,7 @@ async function applyMode() {
   document.querySelectorAll<HTMLElement>(".mode[data-mode]").forEach((b) =>
     b.classList.toggle("active", b.dataset.mode === state.mode),
   );
-  if (state.view !== "library") setView(viewFor(state.mode));
+  if (state.view !== "library" && state.view !== "settings") setView(viewFor(state.mode));
   const report = state.report;
   $("legend").classList.toggle("hidden", state.mode === "normal");
   if (state.mode === "normal" || !report) return viewer.paint([]);
@@ -200,7 +227,10 @@ async function applyMode() {
   const ids = report.assessed.map((e) => e.id);
   if (state.mode === "carbon") {
     const c = state.carbon;
-    if (!c) return viewer.paint([]);
+    if (!c || !c.elements.size) {
+      $("legend").innerHTML = `<span>Nothing calculated: check the material library and project settings.</span>`;
+      return viewer.paint([]);
+    }
     const values = [...c.elements.values()].map((e) => e.total);
     const breaks = carbonBins(values);
     const groups = CARBON_RAMP.map((color) => ({ color, ids: [] as number[] }));
@@ -256,6 +286,7 @@ document.querySelectorAll<HTMLElement>(".rail-item[data-view]").forEach((a) =>
   a.addEventListener("click", async () => {
     const view = a.dataset.view;
     if (view === "library") return setView("library");
+    if (view === "settings") return setView("settings");
     if (view === "overview") state.mode = "normal";
     else if (view === "readiness") state.mode = "readiness";
     else if (view === "carbon") state.mode = "carbon";

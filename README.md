@@ -9,7 +9,7 @@ Most BIM-to-LCA tools are closed plugins: you can't see which model data was mis
 3. **Carbon in 3D.** Embodied carbon (EN 15978, A1–A3 and C3–C4) per element, as a heatmap on the model, with honest coverage: anything estimated is labelled.
 4. **What-if.** Swap a material group for an alternative and watch the totals change.
 
-> Status: day 2 of a 10-day build. The viewer loads IFC models, shows each element's data and material layers, and runs the readiness check. The carbon calculation comes next.
+> Status: day 4 of a 10-day build. The viewer runs the readiness check, shows data coverage, exports issues as BCF, and matches materials to Ökobaudat with a review step. The carbon calculation comes next.
 
 ## The readiness check
 
@@ -42,6 +42,16 @@ What the Duplex shows: it's 99% BIM-ready (two ceilings sit exactly on top of ea
 
 **BCF export.** "Export issues as BCF" writes a [BCF 2.1](https://github.com/buildingSMART/BCF-XML/tree/release_2_1) file with one issue per failing rule, the way a coordinator would send it, not one ticket per element. Each issue lists the failing elements by GlobalId, colours them red, and carries a camera view and snapshot. Issues with 20 elements or fewer open with only those elements visible, so interior ones aren't hidden behind walls. Open it in BIMcollab Zoom, Solibri, or Revit/Archicad with a BCF plugin, next to the IFC. The files validate against buildingSMART's official BCF 2.1 schemas, and each camera points at its elements to within 5 mm (checked against IfcOpenShell geometry).
 
+## Material matching (Ökobaudat)
+
+Carbon data comes from [ÖKOBAUDAT](https://www.oekobaudat.de) 2024-II, the German federal LCA database: 4,218 datasets with A1–A3 values, all but 8 declared to EN 15804+A2. [`scripts/oekobaudat.py`](scripts/oekobaudat.py) turns the official CSV export into [`public/data/oekobaudat-2024-II.json`](public/data/oekobaudat-2024-II.json): GWP per declared unit for A1–A3, C3, C4 and D, density, and the EN 15804 version. For +A2 datasets GWP means GWP-total, so timber shows negative A1–A3 (stored carbon) and a matching C3 when that carbon is released.
+
+**Matching.** Each IFC material is matched to a dataset in [`public/data/mappings/duplex.json`](public/data/mappings/duplex.json). Claude (AI) suggested the matches from the material name, the element types and the layer thicknesses, with a written reason and a shortlist of alternatives. Generic datasets are preferred because the model has no product information. Two layers are mostly cavity, so only part of their volume counts: the stud layer (0.2% steel) and the joist zone (10% timber). Both shares are marked as assumptions to review.
+
+**Review.** In the Material library view, a reviewer approves each match, picks another one from the shortlist, searches the whole database, or excludes the material (the air gap). Only approved matches count. Edits are kept in the browser and can be downloaded as a new mapping file.
+
+**Scope alignment.** The project sets one system boundary: A1–A3, C3 and C4 under EN 15804+A2. A dataset that is on another EN 15804 version, or has no A1–A3 or end-of-life value, is flagged as a scope mismatch. It only counts once the reviewer accepts it with a written reason, which is saved with the mapping. Ökobaudat datasets follow one end-of-life scenario, so recycled products declare C3 and landfilled ones C4. Either one counts as covering the end of life.
+
 ## Run it locally
 
 ```bash
@@ -59,6 +69,9 @@ npm run dev     # opens on http://localhost:5173
 | `src/checks.ts` | The readiness rules (B1–B5, R1–R7) and the engine that runs them |
 | `src/coverage.ts` | Measures where each element's material and quantity come from, and how many elements can be calculated |
 | `src/bcf.ts` | Writes readiness issues as a BCF 2.1 zip (markup, viewpoint, snapshot per issue) |
+| `src/lca-data.ts` | Dataset and mapping types, the system boundary and the scope-alignment check |
+| `src/library.ts` | The material library view: review table, dataset picker and search |
+| `scripts/oekobaudat.py` | Converts the Ökobaudat CSV export into the app's dataset file |
 | `public/requirements/lca-ready.ids` | The same requirements as an IDS file |
 | `src/model-data.ts` | Summarises a model (element counts) and describes one element (attributes, property sets) |
 | `src/panels.ts` | Renders the cards in the side panels |
@@ -68,3 +81,4 @@ npm run dev     # opens on http://localhost:5173
 
 - Sample model: BSI (2020) "Duplex Apartment Test Files," buildingSMART International, <https://github.com/buildingSMART/Sample-Test-Files>, CC BY 4.0. Unchanged.
 - 3D engine: [That Open Engine](https://github.com/ThatOpen/engine_components) and [web-ifc](https://github.com/ThatOpen/engine_web-ifc).
+- LCA data: ÖKOBAUDAT 2024-II, Federal Ministry for Housing, Urban Development and Building (BMWSB) / BBSR, <https://www.oekobaudat.de>. Converted to JSON with only the fields this app uses; values unchanged apart from being expressed per one declared unit.

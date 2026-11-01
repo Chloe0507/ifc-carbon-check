@@ -8,8 +8,12 @@ import { readModel, type ModelData } from "./ifc-data";
 import { runChecks, type CheckReport } from "./checks";
 import { measureCoverage, type Coverage } from "./coverage";
 import { buildBcf, type BcfTopic } from "./bcf";
+import { DEFAULT_BOUNDARY, loadEdits, loadLca, saveEdits, type Dataset, type Mapping } from "./lca-data";
+import { materialUses, renderLibrary } from "./library";
 
 const DEFAULT_MODEL = { url: "models/duplex.ifc", name: "Duplex Apartment" };
+// Material mappings reviewed for the bundled models, by IFC file name.
+const MAPPINGS: Record<string, string> = { "duplex.ifc": "data/mappings/duplex.json" };
 // Issues about this many elements or fewer open with only those elements shown.
 const ISOLATE_BELOW = 20;
 const COLORS = { fail: "#d64545", some: "#f0b429", pass: "#7ccfb5" };
@@ -25,6 +29,11 @@ const state = {
   fileName: "",
   mode: "normal" as "normal" | "readiness",
   rule: null as string | null, // the rule picked in the readiness card, if any
+  view: "overview" as "overview" | "readiness" | "library",
+  datasets: [] as Dataset[],
+  byUuid: new Map<string, Dataset>(),
+  mappings: new Map<string, Mapping>(),
+  boundary: DEFAULT_BOUNDARY,
 };
 
 async function show(bytes: Uint8Array, name: string, fileName: string) {
@@ -55,6 +64,9 @@ async function show(bytes: Uint8Array, name: string, fileName: string) {
   state.coverage = measureCoverage(state.report.assessed, volumes);
   $("kpi-calc").textContent = Math.round((state.coverage.calculable / state.coverage.total) * 100).toString();
   renderCoverage($("coverage"), state.coverage);
+
+  $("loading").textContent = "Loading Ökobaudat datasets…";
+  await loadMappings(fileName);
   await applyMode();
   $("loading").classList.add("hidden");
 }
@@ -80,14 +92,68 @@ function renderReadiness() {
   renderTicker($("ticker"), report);
 }
 
+async function loadMappings(fileName: string) {
+  const lca = await loadLca(MAPPINGS[fileName] ?? "");
+  state.datasets = lca.data.datasets;
+  state.byUuid = lca.byUuid;
+  // The published mapping, with this browser's review edits on top.
+  state.mappings = new Map((lca.mapping?.mappings ?? []).map((m) => [m.material, m]));
+  for (const [name, m] of Object.entries(loadEdits(fileName))) state.mappings.set(name, m);
+  renderLibraryView();
+}
+
+function renderLibraryView() {
+  if (!state.report) return;
+  renderLibrary($("library"), {
+    uses: materialUses(state.report.assessed),
+    mappings: state.mappings,
+    byUuid: state.byUuid,
+    all: state.datasets,
+    boundary: state.boundary,
+    onChange: (m) => {
+      state.mappings.set(m.material, m);
+      const edits = loadEdits(state.fileName);
+      edits[m.material] = m;
+      saveEdits(state.fileName, edits);
+      renderLibraryView();
+    },
+    onShow: async (ids) => {
+      setView("overview");
+      state.mode = "normal";
+      await applyMode();
+      await viewer.paint([{ ids, color: COLORS.some }]);
+      $("legend").classList.remove("hidden");
+      $("legend").innerHTML = legend([[COLORS.some, `${ids.length} elements with this material`]]);
+    },
+  });
+  $("lib-export").addEventListener("click", () => {
+    const file = {
+      model: state.fileName,
+      dataset: "ÖKOBAUDAT 2024-II",
+      suggestedBy: "Claude (AI), reviewed in IFC Carbon Check",
+      mappings: [...state.mappings.values()].sort((a, b) => a.material.localeCompare(b.material)),
+    };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }));
+    a.download = state.fileName.replace(/\.ifc$/i, "") + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+function setView(view: typeof state.view) {
+  state.view = view;
+  $("library").classList.toggle("hidden", view !== "library");
+  document.querySelector(".layout")!.classList.toggle("lib-open", view === "library");
+  document.querySelectorAll<HTMLElement>(".rail-item").forEach((a) => a.classList.toggle("active", a.dataset.view === view));
+}
+
 /** Colours the model for the current mode (and the picked rule, if any). */
 async function applyMode() {
   document.querySelectorAll<HTMLElement>(".mode[data-mode]").forEach((b) =>
     b.classList.toggle("active", b.dataset.mode === state.mode),
   );
-  document.querySelectorAll<HTMLElement>(".rail-item").forEach((a) =>
-    a.classList.toggle("active", a.dataset.view === (state.mode === "readiness" ? "readiness" : "overview")),
-  );
+  if (state.view !== "library") setView(state.mode === "readiness" ? "readiness" : "overview");
   const report = state.report;
   $("legend").classList.toggle("hidden", state.mode === "normal");
   if (state.mode === "normal" || !report) return viewer.paint([]);
@@ -129,6 +195,7 @@ viewer.onPick(async (localId) => {
 document.querySelectorAll<HTMLElement>(".mode[data-mode]").forEach((b) =>
   b.addEventListener("click", async () => {
     state.mode = b.dataset.mode as typeof state.mode;
+    setView(state.mode === "readiness" ? "readiness" : "overview");
     if (state.mode === "normal") state.rule = null;
     if (state.report) renderReadiness();
     await applyMode();
@@ -137,9 +204,12 @@ document.querySelectorAll<HTMLElement>(".mode[data-mode]").forEach((b) =>
 
 document.querySelectorAll<HTMLElement>(".rail-item[data-view]").forEach((a) =>
   a.addEventListener("click", async () => {
-    if (a.dataset.view === "overview") state.mode = "normal";
-    else if (a.dataset.view === "readiness") state.mode = "readiness";
+    const view = a.dataset.view;
+    if (view === "library") return setView("library");
+    if (view === "overview") state.mode = "normal";
+    else if (view === "readiness") state.mode = "readiness";
     else return;
+    setView(view);
     await applyMode();
   }),
 );

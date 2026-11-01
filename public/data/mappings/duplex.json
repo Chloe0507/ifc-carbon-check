@@ -1,0 +1,190 @@
+{
+  "model": "duplex.ifc",
+  "dataset": "ÖKOBAUDAT 2024-II",
+  "suggestedBy": "Claude (AI), from material name, element types and layer thickness. Not yet reviewed.",
+  "mappings": [
+    {
+      "material": "Ceramic Tile",
+      "uuid": "5618689c-57a8-4860-85d3-7403ad5ba201",
+      "reason": "Floor finish, 10 mm. Ökobaudat's generic glazed stoneware tile is declared per m² (20 kg/m²); the area is taken from the layer.",
+      "alternatives": [
+        "91935678-1a09-43e0-8a84-294522407ac3"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Concrete",
+      "uuid": "a71e60a5-b64b-4715-ae8a-c8c8819149d2",
+      "reason": "127 mm slab with no strength class given. C25/30 is the common default for residential slabs. Reinforcement isn't modelled, so it isn't counted.",
+      "alternatives": [
+        "e3d7a045-ee91-43ac-8fb4-a5216c65ba0b",
+        "d6f982e3-beda-49f0-a298-694fcbf3ba38",
+        "61c0c795-7116-407d-8635-68fe422f76a9"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Concrete - Cast In Situ",
+      "uuid": "a71e60a5-b64b-4715-ae8a-c8c8819149d2",
+      "reason": "Foundation walls (417–435 mm) and 150 mm slabs cast in situ. C25/30 as the common default; C30/37 is the alternative for foundations. Reinforcement isn't modelled.",
+      "alternatives": [
+        "d6f982e3-beda-49f0-a298-694fcbf3ba38",
+        "e3d7a045-ee91-43ac-8fb4-a5216c65ba0b",
+        "61c0c795-7116-407d-8635-68fe422f76a9"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Insulation / Thermal Barriers - Rigid insulation",
+      "uuid": "c4ddfdbc-ee2b-4dd5-a754-b317cf06470a",
+      "reason": "Rigid board in the roof (76 mm) and cavity walls (50 mm). In this North American model rigid board is usually XPS; EPS and PIR are the alternatives.",
+      "alternatives": [
+        "121c71e8-0f4c-4529-b72e-331198d15f0f",
+        "355dbd58-78dc-45cc-be8a-43d66d117e15"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Insulation / Thermal Barriers - Semi-rigid insulation",
+      "uuid": "ac779922-219f-4730-9aef-a7da84d334c1",
+      "reason": "3 mm layer in floor build-ups, most likely an impact sound underlay. Mapped to mineral wool floor insulation; a thin underlay could also be a foam product.",
+      "alternatives": [
+        "a5b22bbe-175d-4aef-bb19-4954e699eb8c"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Masonry - Brick",
+      "uuid": "1401638f-b9d7-4b33-9444-b072e2756f49",
+      "reason": "92 mm brick veneer on the exterior walls: generic facing brick.",
+      "alternatives": [
+        "1a365e34-0b95-4c5c-973d-11a038eb7414"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Masonry - Concrete Block",
+      "uuid": "2cdcffc6-84e9-4238-b8af-beebabea9a2d",
+      "reason": "193 mm concrete masonry units. Counted as solid concrete masonry; real hollow blocks have voids, so this overestimates (the hollow-block dataset is the alternative).",
+      "alternatives": [
+        "1c681356-2541-43e7-b1d4-9c4d0a936a08",
+        "c916ceb3-a44d-40b7-8984-861afa589956"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Masonry - Grout",
+      "uuid": "96171066-34d9-4b33-b1e6-3af1ea11db61",
+      "reason": "3 mm bed under the floor tiles: cement mortar.",
+      "alternatives": [
+        "8a115164-6717-4aec-84b1-f79b0b1a947b"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Metal - Steel - 345 MPa",
+      "uuid": "20c29cbd-f9a2-4518-a1ce-c681246c29c8",
+      "reason": "Hot-rolled beams (345 MPa ≈ S355). bauforumstahl's average for structural sections in Germany, declared per kg; the mass comes from the beam volume × 7850 kg/m³.",
+      "alternatives": [
+        "755a481d-a74b-4ba0-b417-cc26767b2d50",
+        "42de525f-7c48-4722-b503-6f423b39b4f4"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Metal - Stud Layer",
+      "uuid": "800dc37d-c3a2-4b12-b14b-54f7bc775f47",
+      "reason": "A stud layer is mostly cavity. Counted as galvanized steel sheet for 0.2% of the layer volume (0.6 mm C-studs at 600 mm centres plus tracks). Any cavity insulation isn't modelled. This share is an assumption to review.",
+      "alternatives": [
+        "0e14d87c-c444-4946-817e-8a1708c2f36e",
+        "755a481d-a74b-4ba0-b417-cc26767b2d50"
+      ],
+      "share": 0.002,
+      "status": "suggested"
+    },
+    {
+      "material": "Misc. Air Layers - Air Space",
+      "uuid": null,
+      "reason": "Air gap: no material, so nothing to count.",
+      "alternatives": [],
+      "share": 1,
+      "status": "excluded"
+    },
+    {
+      "material": "Plasterboard",
+      "uuid": "deeb0bda-20fa-412a-b945-1a589638db21",
+      "reason": "16 mm gypsum board on walls and ceilings, declared per m² of 12.5 mm board. The area is taken from the layer, so the extra 3.5 mm thickness isn't scaled.",
+      "alternatives": [
+        "46c055f0-84a2-423b-ae82-5264886e51ad",
+        "edec09e1-c56e-4655-a094-c9a18e1563ac"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Roofing - Barrier",
+      "uuid": "6869f7c1-1b2b-4f30-afc9-823a0104f1d9",
+      "reason": "Vapour barrier under the roof: PE sheet, per m².",
+      "alternatives": [
+        "c4293a12-5023-4e57-bdcd-9b52fbfa6a58"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Roofing - EPDM Membrane",
+      "uuid": "498cd894-8ae6-458c-b874-9022cb148409",
+      "reason": "EPDM roof membrane, per m².",
+      "alternatives": [],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Site - Grass",
+      "uuid": "8bdc6332-4d94-44c1-9975-a236ff7a3349",
+      "reason": "64 mm green-roof layer, treated as vegetation substrate (per kg at 1400 kg/m³). The full extensive green-roof system dataset is the alternative.",
+      "alternatives": [
+        "7d3f45ad-d97f-467e-ae88-80e125400622"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Wood - Dimensional Lumber",
+      "uuid": "6b363ddc-f127-4d44-9f4b-54daada07465",
+      "reason": "286 mm joist zone in the floors and roof. Counted as solid structural timber (KVH) for 10% of the layer volume (38 mm joists at about 400 mm centres). The rest is cavity. This share is an assumption to review.",
+      "alternatives": [
+        "f00557bd-5b73-4624-8c7b-834db8e8b106"
+      ],
+      "share": 0.1,
+      "status": "suggested"
+    },
+    {
+      "material": "Wood - Flooring",
+      "uuid": "2b389c60-468e-4f3e-abfa-f279262ecd5d",
+      "reason": "16 mm timber floor finish: generic strip parquet, per m².",
+      "alternatives": [
+        "19c8f194-c3ab-4797-9b1a-8f1788bf12d8"
+      ],
+      "share": 1,
+      "status": "suggested"
+    },
+    {
+      "material": "Wood - Sheathing - plywood",
+      "uuid": "24b673e5-b737-4fe9-ab51-ca68391ccdd3",
+      "reason": "19 mm plywood subfloor and roof deck: generic plywood.",
+      "alternatives": [],
+      "share": 1,
+      "status": "suggested"
+    }
+  ]
+}

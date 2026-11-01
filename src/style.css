@@ -308,3 +308,4 @@ html, body {
 .props dl.carbon-dl dt { color: var(--text-2); margin-top: 6px; }
 .props dl.carbon-dl dd { font-weight: 600; }
 .props dl.carbon-dl dd .hint { font-weight: 400; }
+.kpi small { white-space: nowrap; }

@@ -42,6 +42,7 @@ const state = {
   byUuid: new Map<string, Dataset>(),
   mappings: new Map<string, Mapping>(),
   boundary: DEFAULT_BOUNDARY,
+  reviewNote: "",
 };
 
 async function show(bytes: Uint8Array, name: string, fileName: string) {
@@ -107,6 +108,7 @@ async function loadMappings(fileName: string) {
   state.byUuid = lca.byUuid;
   // The published mapping, with this browser's review edits on top.
   state.mappings = new Map((lca.mapping?.mappings ?? []).map((m) => [m.material, m]));
+  state.reviewNote = lca.mapping?.reviewedBy ? `Published mapping reviewed by ${lca.mapping.reviewedBy} on ${lca.mapping.reviewed}.` : "";
   for (const [name, m] of Object.entries(loadEdits(fileName))) state.mappings.set(name, m);
   renderLibraryView();
   recalculate();
@@ -126,7 +128,7 @@ function recalculate() {
     unreviewed,
     assessed: state.report.assessed.length,
   });
-  $<HTMLInputElement>("carbon-provisional").addEventListener("change", async (e) => {
+  document.getElementById("carbon-provisional")?.addEventListener("change", async (e) => {
     state.includeProvisional = (e.target as HTMLInputElement).checked;
     recalculate();
     if (state.mode === "carbon") await applyMode();
@@ -141,6 +143,7 @@ function renderLibraryView() {
     byUuid: state.byUuid,
     all: state.datasets,
     boundary: state.boundary,
+    reviewNote: state.reviewNote,
     onChange: (m) => {
       state.mappings.set(m.material, m);
       const edits = loadEdits(state.fileName);

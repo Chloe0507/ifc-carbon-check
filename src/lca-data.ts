@@ -71,6 +71,9 @@ export interface MappingFile {
   model: string;
   dataset: string; // dataset file version this mapping refers to
   suggestedBy: string;
+  /** Who approved the mapping, and when. */
+  reviewedBy?: string;
+  reviewed?: string;
   mappings: Mapping[];
 }
 

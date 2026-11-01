@@ -191,8 +191,8 @@ export function renderCarbon(
       <div><div class="kpi"><span>${perM2 === null ? "–" : Math.round(perM2)}</span><small>kg/m²</small></div><p class="hint">${opts.floorArea ? `per m² of room area (${Math.round(opts.floorArea.value)} m², ${opts.floorArea.rooms} rooms)` : "no rooms in the model"}</p></div>
     </div>
     <p class="hint">${r.elements.size} of ${opts.assessed} elements calculated${missing ? `; not calculated: ${missing}` : ""}.</p>
-    <label class="toggle"><input type="checkbox" id="carbon-provisional" ${opts.includeProvisional ? "checked" : ""}/>
-      Count unreviewed AI matches${opts.unreviewed ? ` (${opts.unreviewed} of the materials)` : ""}</label>
+    ${opts.unreviewed === 0 ? "" : `<label class="toggle"><input type="checkbox" id="carbon-provisional" ${opts.includeProvisional ? "checked" : ""}/>
+      Count unreviewed AI matches (${opts.unreviewed} of the materials)</label>`}
     ${opts.includeProvisional && r.provisionalTotal ? `<p class="hint prov-note">${kg(r.provisionalTotal)} of the total comes from matches nobody has approved yet.</p>` : ""}
     <h4 class="sub-h">By life-cycle module</h4>
     <ul class="bars">${modules}</ul>

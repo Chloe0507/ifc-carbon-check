@@ -47,6 +47,7 @@ export interface LibraryContext {
   byUuid: Map<string, Dataset>;
   all: Dataset[];
   boundary: SystemBoundary;
+  reviewNote: string;
   onChange: (m: Mapping) => void;
   onShow: (ids: number[]) => void;
 }
@@ -107,7 +108,7 @@ export function renderLibrary(el: HTMLElement, ctx: LibraryContext) {
     <div class="lib-head">
       <div>
         <h2>Material library</h2>
-        <p class="hint">Each IFC material is matched to an Ökobaudat 2024-II dataset. The matches were suggested by AI from the material name, the element types and the layer thicknesses. A match only counts once it is approved and its dataset fits the system boundary.</p>
+        <p class="hint">Each IFC material is matched to an Ökobaudat 2024-II dataset. The matches were suggested by AI from the material name, the element types and the layer thicknesses. A match only counts once it is approved and its dataset fits the system boundary.${ctx.reviewNote ? ` <strong>${esc(ctx.reviewNote)}</strong>` : ""}</p>
       </div>
       <div class="lib-boundary">
         <span class="meta-label">System boundary</span>

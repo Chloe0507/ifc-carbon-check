@@ -1,7 +1,7 @@
 {
   "model": "duplex.ifc",
   "dataset": "ÖKOBAUDAT 2024-II",
-  "suggestedBy": "Claude (AI), from material name, element types and layer thickness. Not yet reviewed.",
+  "suggestedBy": "Claude (AI), from material name, element types and layer thickness.",
   "mappings": [
     {
       "material": "Ceramic Tile",
@@ -11,19 +11,19 @@
         "91935678-1a09-43e0-8a84-294522407ac3"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Concrete",
-      "uuid": "a71e60a5-b64b-4715-ae8a-c8c8819149d2",
-      "reason": "127 mm slab with no strength class given. C25/30 is the common default for residential slabs. Reinforcement isn't modelled, so it isn't counted.",
+      "uuid": "61c0c795-7116-407d-8635-68fe422f76a9",
+      "reason": "Chosen by the reviewer: recycled-aggregate ready-mix C25/30 instead of standard C25/30.",
       "alternatives": [
+        "a71e60a5-b64b-4715-ae8a-c8c8819149d2",
         "e3d7a045-ee91-43ac-8fb4-a5216c65ba0b",
-        "d6f982e3-beda-49f0-a298-694fcbf3ba38",
-        "61c0c795-7116-407d-8635-68fe422f76a9"
+        "d6f982e3-beda-49f0-a298-694fcbf3ba38"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Concrete - Cast In Situ",
@@ -35,7 +35,7 @@
         "61c0c795-7116-407d-8635-68fe422f76a9"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Insulation / Thermal Barriers - Rigid insulation",
@@ -46,7 +46,7 @@
         "355dbd58-78dc-45cc-be8a-43d66d117e15"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Insulation / Thermal Barriers - Semi-rigid insulation",
@@ -56,7 +56,7 @@
         "a5b22bbe-175d-4aef-bb19-4954e699eb8c"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Masonry - Brick",
@@ -66,7 +66,7 @@
         "1a365e34-0b95-4c5c-973d-11a038eb7414"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Masonry - Concrete Block",
@@ -77,7 +77,7 @@
         "c916ceb3-a44d-40b7-8984-861afa589956"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Masonry - Grout",
@@ -87,7 +87,7 @@
         "8a115164-6717-4aec-84b1-f79b0b1a947b"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Metal - Steel - 345 MPa",
@@ -98,7 +98,7 @@
         "42de525f-7c48-4722-b503-6f423b39b4f4"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Metal - Stud Layer",
@@ -109,7 +109,7 @@
         "755a481d-a74b-4ba0-b417-cc26767b2d50"
       ],
       "share": 0.002,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Misc. Air Layers - Air Space",
@@ -128,7 +128,7 @@
         "edec09e1-c56e-4655-a094-c9a18e1563ac"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Roofing - Barrier",
@@ -138,7 +138,7 @@
         "c4293a12-5023-4e57-bdcd-9b52fbfa6a58"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Roofing - EPDM Membrane",
@@ -146,7 +146,7 @@
       "reason": "EPDM roof membrane, per m².",
       "alternatives": [],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Site - Grass",
@@ -156,7 +156,7 @@
         "7d3f45ad-d97f-467e-ae88-80e125400622"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Wood - Dimensional Lumber",
@@ -166,7 +166,7 @@
         "f00557bd-5b73-4624-8c7b-834db8e8b106"
       ],
       "share": 0.1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Wood - Flooring",
@@ -176,7 +176,7 @@
         "19c8f194-c3ab-4797-9b1a-8f1788bf12d8"
       ],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     },
     {
       "material": "Wood - Sheathing - plywood",
@@ -184,7 +184,9 @@
       "reason": "19 mm plywood subfloor and roof deck: generic plywood.",
       "alternatives": [],
       "share": 1,
-      "status": "suggested"
+      "status": "approved"
     }
-  ]
+  ],
+  "reviewedBy": "Chloe",
+  "reviewed": "2026-11-01"
 }
